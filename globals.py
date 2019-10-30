@@ -1,0 +1,3 @@
+DATASET_PATH = './../dataset/'
+FRAME_WIDTH = 256
+ZCR_THRESHOLD = 0.1
