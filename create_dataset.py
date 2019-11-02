@@ -1,8 +1,10 @@
 import numpy as np
 import glob
 from scipy.io import wavfile
+from globals import DATASET_PATH
 
-speech_files, music_files = glob.glob("speech_wav/*.wav"), glob.glob("music_wav/*.wav")
+
+speech_files, music_files = glob.glob(DATASET_PATH + "speech_wav/*.wav"), glob.glob(DATASET_PATH + "music_wav/*.wav")
 
 sample_rate = 22050  # Hz
 frame_len = 2.5
@@ -30,5 +32,5 @@ def split(audio_files, output_directory):
     return audio_data
 
 
-music_data = split(music_files, 'music_24')
-speech_data = split(speech_files, 'speech_24')
+music_data = split(music_files, DATASET_PATH + 'music_24')
+speech_data = split(speech_files, DATASET_PATH +'speech_24')

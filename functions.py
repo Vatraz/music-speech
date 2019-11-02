@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import moment
 from scipy.io import wavfile
+from math import copysign
 
 
 def timestamps(wavedata, frame_width, sample_rate):
@@ -62,6 +63,13 @@ def ste_mean(ste):
     return np.mean(ste)
 
 
+def ste_mler(ste_v, control_coeff=0.1):
+    """ Modified Low Energy Ratio """
+    mean_ste = ste_mean(ste_v)
+    n = len(ste_v)
+    return np.sum([copysign(1, (control_coeff*mean_ste - ste)) + 1 for ste in ste_v]) / (2*n)
+
+
 def read_audio_file(filepath, frame_width, zcr_threshold):
     samplerate, wavedata = wavfile.read(filepath)
 
@@ -83,6 +91,7 @@ def read_audio_file(filepath, frame_width, zcr_threshold):
     data['zcr_std_of_fod'] = zcr_std_of_fod(data['zcr'])
 
     data['ste_mean'] = ste_mean(data['ste'])
+    data['ste_mler'] = ste_mler(data['ste'])
 
     return data
 
@@ -98,6 +107,7 @@ def get_audio_features(filepath, frame_width, zcr_threshold, sound_type):
         'zcr_exceed_th': zcr_exceed_th(zcr, zcr_threshold),
         'zcr_third_central_moment': zcr_third_central_moment(zcr),
         'zcr_std_of_fod': zcr_std_of_fod(zcr),
+        'ste_mler': ste_mler(ste),
     }
     return data
 

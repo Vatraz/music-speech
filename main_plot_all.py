@@ -46,7 +46,14 @@ if __name__ == '__main__':
     music_data = analyse(music_files)
     speech_data = analyse(speech_files)
 
-    draw_mean_feature_table(['zcr_mean', 'zcr_diff_mean', 'zcr_exceed_th',
-                             'zcr_third_central_moment', 'zcr_std_of_fod', 'ste_mean'])
+    draw_mean_feature_table([
+        'zcr_mean',
+        'zcr_diff_mean',
+        'zcr_exceed_th',
+        'zcr_third_central_moment',
+        'zcr_std_of_fod',
+        'ste_mean',
+        'ste_mler',
+    ])
 
     # draw_plots(features=['zcr_mean', 'ste_mean'])

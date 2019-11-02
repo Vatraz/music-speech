@@ -19,10 +19,10 @@ def split(audio_files, output_directory, out_samplerate):
         counter, start = 0, 0
         while start + frame_width <= len(wavedata):
             new_wavedata = wavedata[start:start+frame_width]
-            # new_filename = f'{counter}.'.join(filepath.split('/')[-1].split('.'))
-            # wavfile.write(f'{output_directory}/{new_filename}', file_samplerate, np.asarray(new_wavedata))
-            new_filename = f'{counter}.'.join(filepath.split('\\')[-1].split('.'))
-            wavfile.write(f'{output_directory}\\{new_filename}', file_samplerate, np.asarray(new_wavedata))
+            new_filename = f'{counter}.'.join(filepath.split('/')[-1].split('.'))
+            wavfile.write(f'{output_directory}/{new_filename}', file_samplerate, np.asarray(new_wavedata))
+            # new_filename = f'{counter}.'.join(filepath.split('\\')[-1].split('.'))
+            # wavfile.write(f'{output_directory}\\{new_filename}', file_samplerate, np.asarray(new_wavedata))
             counter += 1
             start += frame_width
 
