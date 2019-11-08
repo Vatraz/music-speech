@@ -4,9 +4,9 @@ from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score
-from globals import OUT_PATH
+from globals import OUT_PATH, DS_NAME
 
-df = pd.read_csv(OUT_PATH + 'hmm.csv', header=0)
+df = pd.read_csv(OUT_PATH + 'test.csv', header=0)
 # print(df.describe(include='all'))
 
 # One-Hot Encoder - audio type
@@ -31,7 +31,7 @@ clf.fit(features_train, target_train)
 target_pred = clf.predict(features_test)
 print('acc:', accuracy_score(target_test, target_pred, normalize=True))
 # # ==========================
-df2 = pd.read_csv(OUT_PATH + 'hmm.csv', header=0)
+df2 = pd.read_csv(OUT_PATH + 'zero.csv', header=0)
 le = preprocessing.LabelEncoder()
 le.fit(df2.type)
 type_cat = le.fit_transform(df2.type)

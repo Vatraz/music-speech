@@ -6,7 +6,7 @@ from globals import DATASET_PATH
 
 speech_files, music_files = glob.glob(DATASET_PATH + "speech_wav/*.wav"), glob.glob(DATASET_PATH + "music_wav/*.wav")
 
-sample_rate = 22050  # Hz
+sample_rate = 16000  # Hz
 frame_len = 2.5
 frame_width = int(sample_rate*2.5)
 

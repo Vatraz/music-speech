@@ -5,7 +5,7 @@ from random import shuffle
 from prettytable import PrettyTable
 from functions import read_audio_file
 from globals import DATASET_PATH
-from globals import FRAME_WIDTH, ZCR_THRESHOLD
+from globals import FRAME_WIDTH, ZCR_THRESHOLD, DS_NAME
 
 
 def analyse(audio_files):
@@ -56,4 +56,4 @@ if __name__ == '__main__':
         'ste_mler',
     ])
 
-    # draw_plots(features=['zcr_mean', 'ste_mean'])
+    draw_plots(features=['zcr_mean', 'ste_mean'])

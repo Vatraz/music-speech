@@ -104,7 +104,6 @@ def get_audio_features(filepath, frame_width, zcr_threshold, sound_type):
     data = {
         'type': sound_type,
         'zcr_diff_mean': zcr_diff_mean(zcr, zcr_mean),
-        'zcr_exceed_th': zcr_exceed_th(zcr, zcr_threshold),
         'zcr_third_central_moment': zcr_third_central_moment(zcr),
         'zcr_std_of_fod': zcr_std_of_fod(zcr),
         'ste_mler': ste_mler(ste),

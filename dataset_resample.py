@@ -4,8 +4,8 @@ from dataset_utils import check_directories
 from globals import DATASET_PATH
 
 
-speech_files, music_files = glob.glob(DATASET_PATH + "speech_wav/*.wav"), \
-                            glob.glob(DATASET_PATH + "music_wav/*.wav")
+speech_files, music_files = glob.glob(DATASET_PATH + "sp/*.wav"), \
+                            glob.glob(DATASET_PATH + "ms/*.wav")
 
 
 def resample(audio_files, output_directory, out_samplerate):
@@ -24,9 +24,9 @@ def resample(audio_files, output_directory, out_samplerate):
         librosa.output.write_wav(path, y, sr)
 
 
-out_samplerate = 22050  # Hz
+out_samplerate = 16000  # Hz
 
-music_dir, speech_dir = check_directories('{}_22k')
+music_dir, speech_dir = check_directories('{}_' + 'test' + '_16k')
 resample(speech_files, speech_dir, out_samplerate)
 resample(music_files, music_dir, out_samplerate)
 
