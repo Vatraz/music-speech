@@ -2,10 +2,10 @@ import numpy as np
 import glob
 from scipy.io import wavfile
 from dataset_utils import check_directories
-from globals import  DATASET_PATH
+from globals import  DATASET_PATH, DS_NAME
 
-speech_files, music_files = glob.glob(DATASET_PATH + 'speech_' + 'test' + '_16k/*.wav'), \
-                            glob.glob(DATASET_PATH + 'music_' + 'test' + '_16k/*.wav')
+speech_files, music_files = glob.glob(DATASET_PATH + 'speech_' + DS_NAME + '_16k/*.wav'), \
+                            glob.glob(DATASET_PATH + 'music_' + DS_NAME + '_16k/*.wav')
 
 
 def split(audio_files, output_directory, out_samplerate):
@@ -30,6 +30,6 @@ def split(audio_files, output_directory, out_samplerate):
 out_samplerate = 16  # Hz
 window_len = 2.5
 
-music_dir, speech_dir = check_directories('{}_' + 'test' + '_25_16k')
+music_dir, speech_dir = check_directories('{}_' + DS_NAME + '_25_16k')
 split(music_files, music_dir, out_samplerate)
 split(speech_files, speech_dir, out_samplerate)

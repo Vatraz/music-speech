@@ -43,15 +43,15 @@ def zcr_mean_value(zcr):
 
 
 def zcr_diff_mean(zcr, zcr_mean):
-    return (zcr > zcr_mean).sum() - (zcr < zcr_mean).sum()
+    return ((zcr > zcr_mean).sum() - (zcr < zcr_mean).sum())/(len(zcr))
 
 
 def zcr_exceed_th(zcr, threshold):
-    return (zcr > threshold).sum()
+    return (zcr > threshold).sum() / (len(zcr))
 
 
 def zcr_third_central_moment(zcr, m=3):
-    return moment(zcr, moment=m)
+    return abs(moment(zcr, moment=m))
 
 
 def zcr_std_of_fod(zcr):
@@ -66,8 +66,15 @@ def ste_mean(ste):
 def ste_mler(ste_v, control_coeff=0.1):
     """ Modified Low Energy Ratio """
     mean_ste = ste_mean(ste_v)
+    if(mean_ste == 0):
+        print('malutko')
     n = len(ste_v)
-    return np.sum([copysign(1, (control_coeff*mean_ste - ste)) + 1 for ste in ste_v]) / (2*n)
+    def sgn(x):
+        if x > 0:
+            return 1
+        else:
+            return -1
+    return np.sum([sgn(control_coeff*mean_ste - ste) + 1 for ste in ste_v]) / (n)
 
 
 def read_audio_file(filepath, frame_width, zcr_threshold):
@@ -105,6 +112,7 @@ def get_audio_features(filepath, frame_width, zcr_threshold, sound_type):
         'type': sound_type,
         'zcr_diff_mean': zcr_diff_mean(zcr, zcr_mean),
         'zcr_third_central_moment': zcr_third_central_moment(zcr),
+        'zcr_exceed_th': zcr_exceed_th(zcr, zcr_threshold),
         'zcr_std_of_fod': zcr_std_of_fod(zcr),
         'ste_mler': ste_mler(ste),
     }

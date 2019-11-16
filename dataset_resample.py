@@ -1,11 +1,11 @@
 import glob
 import librosa
 from dataset_utils import check_directories
-from globals import DATASET_PATH
+from globals import DATASET_PATH, DS_NAME
 
 
-speech_files, music_files = glob.glob(DATASET_PATH + "sp/*.wav"), \
-                            glob.glob(DATASET_PATH + "ms/*.wav")
+speech_files, music_files = glob.glob(DATASET_PATH + 'speech_' + DS_NAME + "/*.wav"), \
+                            glob.glob(DATASET_PATH + 'music_' + DS_NAME + "/*.wav")
 
 
 def resample(audio_files, output_directory, out_samplerate):
@@ -26,7 +26,7 @@ def resample(audio_files, output_directory, out_samplerate):
 
 out_samplerate = 16000  # Hz
 
-music_dir, speech_dir = check_directories('{}_' + 'test' + '_16k')
+music_dir, speech_dir = check_directories('{}_' + DS_NAME + '_16k')
 resample(speech_files, speech_dir, out_samplerate)
 resample(music_files, music_dir, out_samplerate)
 
