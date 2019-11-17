@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import moment
 from scipy.io import wavfile
+from statistics import stdev
 from math import copysign
 
 
@@ -46,17 +47,29 @@ def zcr_diff_mean(zcr, zcr_mean):
     return ((zcr > zcr_mean).sum() - (zcr < zcr_mean).sum())/(len(zcr))
 
 
-def zcr_exceed_th(zcr, threshold):
-    return (zcr > threshold).sum() / (len(zcr))
+# def zcr_exceed_th(zcr, threshold):
+#     return (zcr > threshold).sum() / (len(zcr))
+
+
+def zcr_exceed_th(zcr_v, zcr_mean, control_coeff=1.2):
+    def sgn(x):
+        if x > 0:
+            return 1
+        else:
+            return -1
+    m = max(zcr_v)
+    n = len(zcr_v)
+    return np.sum([sgn(zcr - (m - control_coeff*zcr_mean)) + 1 for zcr in zcr_v]) / (2*n)
+
 
 
 def zcr_third_central_moment(zcr, m=3):
-    return abs(moment(zcr, moment=m))
+    return moment(zcr, moment=m)
 
 
 def zcr_std_of_fod(zcr):
     """ Standard deviation of the first order difference """
-    return np.std(np.diff(zcr))
+    return np.std(zcr)
 
 
 def ste_mean(ste):
@@ -69,12 +82,13 @@ def ste_mler(ste_v, control_coeff=0.1):
     if(mean_ste == 0):
         print('malutko')
     n = len(ste_v)
+
     def sgn(x):
         if x > 0:
             return 1
         else:
             return -1
-    return np.sum([sgn(control_coeff*mean_ste - ste) + 1 for ste in ste_v]) / (n)
+    return np.sum([sgn(control_coeff*mean_ste - ste) + 1 for ste in ste_v]) / (2*n)
 
 
 def read_audio_file(filepath, frame_width, zcr_threshold):
@@ -103,7 +117,7 @@ def read_audio_file(filepath, frame_width, zcr_threshold):
     return data
 
 
-def get_audio_features(filepath, frame_width, zcr_threshold, sound_type):
+def get_audio_features(filepath, frame_width, sound_type):
     samplerate, wavedata = wavfile.read(filepath)
     zcr = zero_crossing_rate(wavedata, frame_width)
     ste = short_time_energy(wavedata, frame_width)
@@ -112,7 +126,7 @@ def get_audio_features(filepath, frame_width, zcr_threshold, sound_type):
         'type': sound_type,
         'zcr_diff_mean': zcr_diff_mean(zcr, zcr_mean),
         'zcr_third_central_moment': zcr_third_central_moment(zcr),
-        'zcr_exceed_th': zcr_exceed_th(zcr, zcr_threshold),
+        'zcr_exceed_th': zcr_exceed_th(zcr, zcr_mean),
         'zcr_std_of_fod': zcr_std_of_fod(zcr),
         'ste_mler': ste_mler(ste),
     }

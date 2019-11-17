@@ -1,3 +1,4 @@
+from keras.callbacks import ModelCheckpoint
 from numpy import loadtxt
 from keras.models import Sequential
 from keras.layers import Dense
@@ -10,6 +11,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
+from keras.models import load_model
 
 
 def main(l):
@@ -25,7 +27,7 @@ def main(l):
     sns.heatmap(corr,
                 xticklabels=corr.columns.values,
                 yticklabels=corr.columns.values)
-    # plt.show()
+    plt.show()
 
     # ============================================
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
@@ -35,26 +37,28 @@ def main(l):
 
     print(X_train)
 
-    model = Sequential()
+    filepath = 'siup.hdf5'
+    try:
+        model = load_model(filepath)
+    except:
+        model = Sequential()
 
-    model.add(Dense(5, activation='relu', input_shape=(5,)))
-    model.add(Dense(5, activation='relu'))
-    model.add(Dense(5, activation='relu'))
-    model.add(Dropout(0.4))
-    model.add(Dense(5, activation='relu'))
-    model.add(Dense(1, activation='sigmoid'))
+        model.add(Dense(5, activation='relu', input_shape=(5,)))
+        model.add(Dense(25, activation='relu'))
+        model.add(Dense(25, activation='relu'))
+        model.add(Dense(25, activation='relu'))
+        model.add(Dense(5, activation='relu'))
+        model.add(Dense(1, activation='sigmoid'))
+        model.compile(loss='binary_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
 
-    model.compile(loss='binary_crossentropy',
-                  optimizer='adam',
-                  metrics=['accuracy'])
 
-    model.fit(X_train, y_train, epochs=15, batch_size=2, verbose=1)
-
+    checkpointer = ModelCheckpoint(filepath, verbose=1, save_best_only=False, save_weights_only=False)
+    model.fit(X_train, y_train, epochs=3000, batch_size=100, callbacks=[checkpointer])
     #  ===========================================
-    # y_pred = model.predict_classes(X_test)
     score = model.evaluate(X_test, y_test,verbose=1)
     print(score)
-    return model
 
 
 def test(model, t):
@@ -75,7 +79,8 @@ def test_all(model, t):
     test(model, t+'s')
 
 if __name__ == '__main__':
-    model = main('zero')
+    main('zero')
+    model = load_model('siup.hdf5')
     test_all(model, 'g')
     test_all(model, 'r')
     test_all(model, 't')

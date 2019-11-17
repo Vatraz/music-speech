@@ -14,8 +14,8 @@ def main(DS_NAME):
         speech_files, music_files = glob.glob(DATASET_PATH + 'speech_' + DS_NAME + '_25_16k/*.wav'), \
                                     glob.glob(DATASET_PATH + 'music_' + DS_NAME + '_25_16k/*.wav')
 
-    music_data = [get_audio_features(file, FRAME_WIDTH, ZCR_THRESHOLD, sound_type=1) for file in music_files]
-    speech_data = [get_audio_features(file, FRAME_WIDTH, ZCR_THRESHOLD, sound_type=0) for file in speech_files]
+    music_data = [get_audio_features(file, FRAME_WIDTH, sound_type=1) for file in music_files]
+    speech_data = [get_audio_features(file, FRAME_WIDTH, sound_type=0) for file in speech_files]
     print('zrobione?')
     df = pd.DataFrame(music_data + speech_data)
     # df = df[df.ste_mler != 0.0]

@@ -6,9 +6,17 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score
 from globals import OUT_PATH, DS_NAME
 from sklearn.preprocessing import StandardScaler
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 
 def learn(n):
     df = pd.read_csv(OUT_PATH + n + '.csv', header=0)
+    corr = df.corr()
+    sns.heatmap(corr,
+                xticklabels=corr.columns.values,
+                yticklabels=corr.columns.values)
+    plt.show()
     # print(df.describe(include='all'))
     clf = GaussianNB()
 
@@ -25,7 +33,7 @@ def learn(n):
     # ------------
     print(df.describe(include='all'))
 
-    features, target = df.values[:, -2:], df.values[:, 0]
+    features, target = df.values[:, 1:], df.values[:, 0]
     scaler = None
     scaler = StandardScaler().fit(features)
     features = scaler.transform(features)
@@ -34,8 +42,8 @@ def learn(n):
     features_train, features_test, target_train, target_test = train_test_split(
         features, target, test_size=0.29, random_state=100)
     #  ----------
-    print(features)
-    print(target)
+    # print(features)
+    # print(target)
     clf.fit(features_train, target_train)
 
     target_pred = clf.predict(features_test)
@@ -46,7 +54,7 @@ def learn(n):
 
 # # ==========================
 def clas(n, clf, scaler):
-    df2 = pd.read_csv(OUT_PATH + n + '.csv', header=0)
+    df = pd.read_csv(OUT_PATH + n + '.csv', header=0)
 
     # NORMALIZACJA
     # for feature in list(df2.columns)[1:]:
@@ -56,35 +64,24 @@ def clas(n, clf, scaler):
     #     df2.loc[:, feature] = (df2[feature]) / std
     # ------------
     # print(df2.describe(include='all'))
-    features2, target2 = df2.values[:, -2:], df2.values[:, 0]
+    features, target = df.values[:, 1:], df.values[:, 0]
     if scaler is not None:
-        features2 = scaler.transform(features2)
+        features = scaler.transform(features)
+
+    target_pred = clf.predict(features)
+    # target_pred_p = clf.predict_proba(features)
+    # for i in zip(target_pred_p, target_pred):
+    #     print(i)
+    print(n, 'custom acc:', accuracy_score(target, target_pred, normalize=True))
 
 
-    target_pred2 = clf.predict(features2)
-    # target_pred2_p = clf.predict_proba(features2)
-    # print(target_pred2)
-    # for i in zip(target_pred2_p, target_pred2):
-    #     if i[1] == 0.0:
-    #         print(i, '<================================')
-    #     else:
-    #         print(i)
-    print(n, 'custom acc:', accuracy_score(target2, target_pred2, normalize=True))
+def start_clas(f, clf, scaler):
+    clas(f, clf, scaler)
+    clas(f + 'm', clf, scaler)
+    clas(f + 's', clf, scaler)
 
 
-clf, sclaer = learn('zero')
+clf, scaler = learn('zero')
+for f in ('g', 't', 'r'):
+    start_clas(f, clf, scaler)
 
-f = 'g'
-clas(f, clf, sclaer)
-clas(f+'m', clf, sclaer)
-clas(f+'s', clf, sclaer)
-
-f = 't'
-clas(f, clf, sclaer)
-clas(f+'m', clf, sclaer)
-clas(f+'s', clf, sclaer)
-
-f = 'r'
-clas(f, clf, sclaer)
-clas(f+'m', clf, sclaer)
-clas(f+'s', clf, sclaer)
