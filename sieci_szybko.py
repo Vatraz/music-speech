@@ -27,7 +27,7 @@ def main(l):
     sns.heatmap(corr,
                 xticklabels=corr.columns.values,
                 yticklabels=corr.columns.values)
-    plt.show()
+    # plt.show()
 
     # ============================================
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
@@ -43,11 +43,9 @@ def main(l):
     except:
         model = Sequential()
 
-        model.add(Dense(5, activation='relu', input_shape=(5,)))
-        model.add(Dense(25, activation='relu'))
-        model.add(Dense(25, activation='relu'))
-        model.add(Dense(25, activation='relu'))
-        model.add(Dense(5, activation='relu'))
+        model.add(Dense(6, activation='relu', input_shape=(6,)))
+        model.add(Dense(18, activation='relu'))
+        model.add(Dense(18, activation='relu'))
         model.add(Dense(1, activation='sigmoid'))
         model.compile(loss='binary_crossentropy',
                       optimizer='adam',
@@ -55,7 +53,7 @@ def main(l):
 
 
     checkpointer = ModelCheckpoint(filepath, verbose=1, save_best_only=False, save_weights_only=False)
-    model.fit(X_train, y_train, epochs=3000, batch_size=100, callbacks=[checkpointer])
+    model.fit(X_train, y_train, epochs=5000, batch_size=200, callbacks=[checkpointer])
     #  ===========================================
     score = model.evaluate(X_test, y_test,verbose=1)
     print(score)
@@ -70,6 +68,10 @@ def test(model, t):
     # X_radio = scaler.transform(X_radio)
 
     score = model.evaluate(X_radio, y_radio,verbose=1)
+    if t =='fs':
+        hm = (model.predict(X_radio), model.predict_classes(X_radio))
+        a = 23
+
     print(t, ' -> ', score)
 
 
@@ -81,6 +83,8 @@ def test_all(model, t):
 if __name__ == '__main__':
     main('zero')
     model = load_model('siup.hdf5')
+    test_all(model, 'wav')
     test_all(model, 'g')
-    test_all(model, 'r')
+    test_all(model, 'c')
     test_all(model, 't')
+    test_all(model, 'f')

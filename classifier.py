@@ -82,6 +82,6 @@ def start_clas(f, clf, scaler):
 
 
 clf, scaler = learn('zero')
-for f in ('g', 't', 'r'):
+for f in ('g', 't', 'c', 'f'):
     start_clas(f, clf, scaler)
 

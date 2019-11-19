@@ -128,6 +128,7 @@ def get_audio_features(filepath, frame_width, sound_type):
         'zcr_third_central_moment': zcr_third_central_moment(zcr),
         'zcr_exceed_th': zcr_exceed_th(zcr, zcr_mean),
         'zcr_std_of_fod': zcr_std_of_fod(zcr),
+        'zcr_mean': zcr_mean,
         'ste_mler': ste_mler(ste),
     }
     return data

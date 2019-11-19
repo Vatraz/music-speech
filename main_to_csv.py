@@ -4,15 +4,15 @@ from functions import get_audio_features
 from globals import DATASET_PATH, OUT_PATH
 from globals import FRAME_WIDTH, ZCR_THRESHOLD, DS_NAME
 
-
+freq = '22'
 def main(DS_NAME):
     print('-> "', DS_NAME, '"')
     if DS_NAME == '':
-        speech_files, music_files = glob.glob(DATASET_PATH + 'speech_25_16k/*.wav'), \
-                                    glob.glob(DATASET_PATH + 'music_25_16k/*.wav')
+        speech_files, music_files = glob.glob(DATASET_PATH + f'speech_25_{freq}k/*.wav'), \
+                                    glob.glob(DATASET_PATH + f'music_25_{freq}k/*.wav')
     else:
-        speech_files, music_files = glob.glob(DATASET_PATH + 'speech_' + DS_NAME + '_25_16k/*.wav'), \
-                                    glob.glob(DATASET_PATH + 'music_' + DS_NAME + '_25_16k/*.wav')
+        speech_files, music_files = glob.glob(DATASET_PATH + 'speech_' + DS_NAME + f'_25_{freq}k/*.wav'), \
+                                    glob.glob(DATASET_PATH + 'music_' + DS_NAME + f'_25_{freq}k/*.wav')
 
     music_data = [get_audio_features(file, FRAME_WIDTH, sound_type=1) for file in music_files]
     speech_data = [get_audio_features(file, FRAME_WIDTH, sound_type=0) for file in speech_files]
@@ -28,12 +28,14 @@ def main(DS_NAME):
     df = pd.DataFrame(speech_data)
     df.to_csv(OUT_PATH + DS_NAME + 's.csv', index=None, header=True)
 
+tup = (
+    't',
+    'c',
+    'g',
+    'wav',
+    'f',
+)
 
-DS_NAME = 't'
-main(DS_NAME)
-DS_NAME = 'g'
-main(DS_NAME)
-DS_NAME = 'r'
-main(DS_NAME)
-DS_NAME = ''
-main(DS_NAME)
+for n in tup:
+    main(n)
+

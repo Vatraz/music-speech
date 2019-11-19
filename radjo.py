@@ -30,6 +30,7 @@ import urllib.request
 import librosa
 import io
 from pydub import AudioSegment
+import time
 
 
 def check_duration(value):
@@ -47,15 +48,8 @@ def check_duration(value):
 
 
 def read_settings(args):
-    settings_base_dir = ''
-    if args.settings:
-        settings_base_dir = args.settings
-    elif sys.platform.startswith('linux'):
-        #  settings_base_dir = os.getenv(
-        #      'HOME') + os.sep + '.config' + os.sep + 'radiorec'
-        settings_base_dir = '.'
-    elif sys.platform == 'win32':
-        settings_base_dir = '.'
+
+    settings_base_dir = '.'
     settings_base_dir += os.sep
     config = configparser.ConfigParser()
     try:
@@ -68,37 +62,60 @@ def read_settings(args):
     return dict(config.items())
 
 
-hmm = []
 def record_worker(stoprec, streamurl, target_dir, args):
     conn = urllib.request.urlopen(streamurl)
     cur_dt_string = datetime.datetime.now().strftime('%Y-%m-%dT%H_%M_%S')
     filename = target_dir + os.sep + cur_dt_string + "_" + args.station
-    if args.name:
-        filename += '_' + args.name
-    content_type = conn.getheader('Content-Type')
-    if(content_type == 'audio/mpeg'):
-        filename += '.mp3'
-    elif(content_type == 'application/aacp' or content_type == 'audio/aacp'):
-        filename += '.aac'
-    elif(content_type == 'application/ogg' or content_type == 'audio/ogg'):
-        filename += '.ogg'
-    elif(content_type == 'audio/x-mpegurl'):
-        print('Sorry, M3U playlists are currently not supported')
-        sys.exit()
-    else:
-        print('Unknown content type "' + content_type + '". Assuming mp3.')
-        filename += '.mp3'
+    # if args.name:
+    #     filename += '_' + args.name
+    # content_type = conn.getheader('Content-Type')
+    # print(content_type)
+    # if(content_type == 'audio/mpeg'):
+    #     filename += '.mp3'
+    # elif(content_type == 'application/aacp' or content_type == 'audio/aacp'):
+    #     filename += '.aac'
+    # elif(content_type == 'application/ogg' or content_type == 'audio/ogg'):
+    #     filename += '.ogg'
+    # elif(content_type == 'audio/x-mpegurl'):
+    #     print('Sorry, M3U playlists are currently not supported')
+    #     sys.exit()
+    # else:
+    #     print('Unknown content type "' + content_type + '". Assuming mp3.')
+    #     filename += '.mp3'
 
-    if args.public:
-        verboseprint('Apply public write permissions (Linux only)')
-        os.chmod(filename, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |
-                 stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
-    verboseprint('Recording ' + args.station + '...')
+    # if args.public:
+    #     verboseprint('Apply public write permissions (Linux only)')
+    #     os.chmod(filename, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |
+    #              stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
+    # verboseprint('Recording ' + args.station + '...')
+
+    # segment = None
+    i = 1
+    segment = AudioSegment.empty()
     while(not stoprec.is_set() and not conn.closed):
-        hmm.append(conn.read(1024))
+        hmm = conn.read(10024)
+        i += 1
+        # print(hmm)
+        then = time.time()
+        song = AudioSegment.from_file(io.BytesIO(hmm), format="mp3")
+
+
+        segment = segment + song
+
+        if segment.duration_seconds >= 5:
+            s = segment[:2000]
+            s = s.set_channels(1)
+            s = s.set_frame_rate(22500)
+            s.export(f'hmm{i}.wav', format='wav')
+            segment = AudioSegment.empty()
+
+        print(segment.duration_seconds)
+        # segment.export('hmm.wav', format='wav', parameters=" -ac 1")
+
+        now = time.time()
+        print("             It took: ", now - then, " seconds")
+
         #  target.write(conn.read(1024))
-            
-    print(hmm)
 
 def record(args):
     settings = read_settings(args)
@@ -127,14 +144,16 @@ def record(args):
                                  args=(stoprec, streamurl, target_dir, args))
 
     recthread.setDaemon(True)
+    then = time.time()
     recthread.start()
     recthread.join(args.duration)
+    now = time.time()
+    print("It took: ", now - then, " seconds")
     print('ehh')
-    # print(hmm)
-    song = AudioSegment.from_file(io.BytesIO(b''.join(hmm)), format="mp3")
-    song.export('hmm.wav', format='wav', parameters=" -ac 1")
-    if(recthread.is_alive):
-        stoprec.set()
+    # song = AudioSegment.from_file(io.BytesIO(b''.join(hmm)), format="mp3")
+
+    # if(recthread.is_alive):
+    #     stoprec.set()
 
 
 def list(args):
