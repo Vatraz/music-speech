@@ -102,7 +102,7 @@ def record_worker(stoprec, streamurl, target_dir, args):
 
         segment = segment + song
 
-        if segment.duration_seconds >= 5:
+        if segment.duration_seconds >= 2:
             s = segment[:2000]
             s = s.set_channels(1)
             s = s.set_frame_rate(22500)
