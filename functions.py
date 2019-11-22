@@ -5,18 +5,26 @@ from statistics import stdev
 from math import copysign
 
 
+def sgn(x):
+    if x > 0:
+        return 1
+    else:
+        return -1
+
 def timestamps(wavedata, frame_width, sample_rate):
     num_frames = int(np.ceil(len(wavedata) / frame_width))
     return (np.arange(0, num_frames - 1) * (frame_width / float(sample_rate)))
 
 
-def zcr_ste(samples, frame_width, num_frames):
+def zcr_ste(samples: np.ndarray, frame_width: int, num_frames: int):
     zcr_v, ste_v = [], []
     for i in range(num_frames):
         frame = samples[i*frame_width:(i+1)*frame_width]
         zcr = 1/(2*frame_width) * np.count_nonzero(np.diff(np.sign(frame)))
         zcr_v.append(zcr)
         ste = np.sum(np.square(frame, dtype=np.int64))
+        if ste < 0:
+            print("rhh")
         ste_v.append(ste)
     return np.array(zcr_v), np.array(ste_v)
 
@@ -79,12 +87,12 @@ def zcr_mean_value(zcr):
     return np.mean(zcr)
 
 
-def zcr_diff_mean1(zcr, zcr_mean):
-    return ((zcr > zcr_mean).sum() - (zcr < zcr_mean).sum())/(len(zcr))
+# def zcr_diff_mean1(zcr, zcr_mean):
+#     return ((zcr > zcr_mean).sum() - (zcr < zcr_mean).sum())/(len(zcr))
 
 
 def zcr_diff_mean(zcr_v, zcr_mean):
-    return np.sum(sgn(zcr - zcr_mean) +1 for zcr in zcr_v) / (2*zcr_v.size)
+    return np.sum([sgn(zcr - zcr_mean) + 1 for zcr in zcr_v]) / (2*zcr_v.size)
 
 # def zcr_exceed_th(zcr, threshold):
 #     return (zcr > threshold).sum() / (len(zcr))
@@ -109,11 +117,7 @@ def ste_mean(ste):
     return np.mean(ste)
 
 
-def sgn(x):
-    if x > 0:
-        return 1
-    else:
-        return -1
+
 
 def ste_mler(ste_v, control_coeff=0.1):
     ste_mean = np.mean(ste_v)
@@ -159,7 +163,7 @@ def get_audio_features(filepath, frame_width, sound_type):
         'zcr_third_central_moment': zcr_third_central_moment(zcr),
         'zcr_exceed_th': zcr_exceed_th(zcr, zcr_mean),
         'zcr_std_of_fod': zcr_std_of_fod(zcr),
-        'zcr_mean': zcr_mean,
+        # 'zcr_mean': zcr_mean,
         'ste_mler': ste_mler(ste),
     }
     return data

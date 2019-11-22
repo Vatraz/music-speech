@@ -43,9 +43,10 @@ def main(l):
     except:
         model = Sequential()
 
-        model.add(Dense(6, activation='relu', input_shape=(6,)))
-        model.add(Dense(18, activation='relu'))
-        model.add(Dense(18, activation='relu'))
+        model.add(Dense(5, activation='relu', input_shape=(5,)))
+        model.add(Dense(15, activation='relu'))
+        model.add(Dense(25, activation='relu'))
+        model.add(Dense(25, activation='relu'))
         model.add(Dense(1, activation='sigmoid'))
         model.compile(loss='binary_crossentropy',
                       optimizer='adam',
@@ -53,7 +54,7 @@ def main(l):
 
 
     checkpointer = ModelCheckpoint(filepath, verbose=1, save_best_only=False, save_weights_only=False)
-    model.fit(X_train, y_train, epochs=5000, batch_size=200, callbacks=[checkpointer])
+    model.fit(X_train, y_train, epochs=3000, batch_size=200, callbacks=[checkpointer])
     #  ===========================================
     score = model.evaluate(X_test, y_test,verbose=1)
     print(score)
@@ -62,11 +63,10 @@ def main(l):
 def test(model, t):
     #  ===========================================
     dataset = pd.read_csv(OUT_PATH + t + '.csv', header=0)
-    # print(dataset)
     X_radio = dataset.iloc[:,1:]
+    # print(X_radio)
     y_radio = dataset.iloc[:,0]
     # X_radio = scaler.transform(X_radio)
-
     score = model.evaluate(X_radio, y_radio,verbose=1)
     if t =='fs':
         hm = (model.predict(X_radio), model.predict_classes(X_radio))
@@ -87,4 +87,5 @@ if __name__ == '__main__':
     test_all(model, 'g')
     test_all(model, 'c')
     test_all(model, 't')
+    test_all(model, 'aa')
     test_all(model, 'f')
