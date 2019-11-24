@@ -5,7 +5,7 @@ from globals import DATASET_PATH, OUT_PATH
 from globals import FRAME_WIDTH, ZCR_THRESHOLD, DS_NAME
 
 dfs = []
-for n in ('wav', 'zet', 'g', 'trzys'):
+for n in ('wav', 'ts', 'g', 'fs', 'fm'):
     df = pd.read_csv(OUT_PATH + n + '.csv', header=0)
     dfs.append(df)
 

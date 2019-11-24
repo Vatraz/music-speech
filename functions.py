@@ -98,7 +98,7 @@ def zcr_diff_mean(zcr_v, zcr_mean):
 #     return (zcr > threshold).sum() / (len(zcr))
 
 
-def zcr_exceed_th(zcr_v, zcr_mean, control_coeff=1.3):
+def zcr_exceed_th(zcr_v, zcr_mean, control_coeff=1.5):
     m = max(zcr_v)
     n = len(zcr_v)
     return np.sum([sgn(zcr - (m - control_coeff*zcr_mean)) + 1 for zcr in zcr_v]) / (2*n)
@@ -116,7 +116,7 @@ def zcr_std_of_fod(zcr_v):
 def ste_mean(ste):
     return np.mean(ste)
 
-def ste_mler(ste_v, control_coeff=0.12):
+def ste_mler(ste_v, control_coeff=0.15):
     ste_mean = np.mean(ste_v)
     n = len(ste_v)
 

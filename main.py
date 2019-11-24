@@ -148,8 +148,8 @@ def aud_seg_to_array(segment):
 
 
 def classifier(input_conn, output_send_conn, start_event):
-    import keras
-    model = keras.models.load_model('siup.hdf5')
+    from tensorflow.python import keras
+    model = keras.models.load_model('siup2.hdf5')
     start_event.set()
     while True:
         try:
@@ -188,7 +188,7 @@ def main():
         ]
     ]
 
-    window = sg.Window('Inzyniera siup', layout)
+    window = sg.Window('Klasyfikator', layout)
     prediction_bar = window['prediction_bar']
     prediction_prc = window['prediction_prc']
     prediction_cls = window['prediction_cls']

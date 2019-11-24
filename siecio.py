@@ -30,7 +30,7 @@ def main(l, sc = False):
     # plt.show()
 
     # ============================================
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=62)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
 
     print(X_train)
 
@@ -40,10 +40,7 @@ def main(l, sc = False):
     except:
         model = Sequential()
 
-        model.add(Dense(5, activation='relu', input_shape=(5,)))
-        model.add(Dense(25, activation='relu'))
-        model.add(Dense(25, activation='relu'))
-        model.add(Dense(15, activation='relu'))
+        model.add(Dense(35, activation='relu', input_shape=(5,)))
         model.add(Dense(1, activation='sigmoid'))
         model.compile(loss='binary_crossentropy',
                       optimizer='adam',
@@ -89,5 +86,5 @@ if __name__ == '__main__':
     main('zero', sc=False)
     # #
     model = load_model('siup.hdf5')
-    for tup in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic'):
+    for tup in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic','wav', 'g', 't', 'c'):
         test_all(model, tup)
