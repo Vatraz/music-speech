@@ -93,7 +93,7 @@ def record_worker(stoprec, streamurl, target_dir, args):
     i = 1
     segment = AudioSegment.empty()
     while(not stoprec.is_set() and not conn.closed):
-        hmm = conn.read(10024)
+        hmm = conn.read(10240)
         i += 1
         # print(hmm)
         then = time.time()

@@ -9,7 +9,7 @@ from dataset_split_files import split
 
 out_samplerate = FREQUENCY  # Hz
 window_len = WINDOW_LEN
-for DS_NAME in ('c'):
+for DS_NAME in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic', 'wav', 'g', 'f', 't', 'c'):
     speech_files, music_files = glob.glob(DATASET_PATH + 'speech_' + DS_NAME + "/*.wav"), \
                                 glob.glob(DATASET_PATH + 'music_' + DS_NAME + "/*.wav")
     music_dir, speech_dir = check_directories('{}_' + DS_NAME + '_22k')
@@ -21,3 +21,5 @@ for DS_NAME in ('c'):
     music_dir, speech_dir = check_directories('{}_' + DS_NAME + '_25_22k')
     split(music_files, music_dir, window_len)
     split(speech_files, speech_dir, window_len)
+
+    print(DS_NAME + ' zrobione')

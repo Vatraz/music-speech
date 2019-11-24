@@ -1,5 +1,6 @@
 import copy
 from multiprocessing import Process, Event, Queue, Pipe
+from threading import Thread
 from multiprocessing.connection import wait
 import PySimpleGUI as sg
 import urllib.request
@@ -8,6 +9,7 @@ import io
 from functions import zcr_ste, zcr_diff_mean, zcr_third_central_moment, zcr_exceed_th, zcr_std_of_fod, ste_mler
 import numpy as np
 from pydub.playback import play
+from queue import Queue
 
 FRAME_WIDTH = 450
 NUM_FRAMES = 100
@@ -52,13 +54,31 @@ def get_format(url_conn):
         return '.mp3'
 
 
-def audio_segment_process(audio_format, data_conn, input_conn):
+# def audio_segment_process(audio_format, data_conn, input_conn):
+#     segment = AudioSegment.empty()
+#     while True:
+#         try:
+#             bytes = data_conn.recv()
+#         except EOFError as e:
+#             print(e)
+#             break
+#
+#         segment = segment + AudioSegment.from_file(io.BytesIO(bytes), format=audio_format)
+#         if segment.duration_seconds >= 2:
+#             window = segment[:2000]
+#             window = window.set_channels(1)
+#             window = window.set_frame_rate(22500)
+#             window.export('jezu.wav', format='wav')
+#
+#             window_v = aud_seg_to_array(window)
+#             input_conn.send(get_input_vector(window_v))
+#             segment = segment[2000:]
+
+def audio_segment_process(audio_format, bytes_q, input_conn):
     segment = AudioSegment.empty()
     while True:
-        try:
-            bytes = data_conn.recv()
-        except EOFError as e:
-            print(e)
+        bytes = bytes_q.get(timeout=5)
+        if bytes is None:
             break
 
         segment = segment + AudioSegment.from_file(io.BytesIO(bytes), format=audio_format)
@@ -77,7 +97,12 @@ def read_transmission(input_conn, radio_recv_ev, radio_link):
     radio_url = decode_to_url(radio_link)
     url_conn = urllib.request.urlopen(radio_url)
     audio_format = get_format(url_conn)
-    segment = AudioSegment.empty()
+    # segment = AudioSegment.empty()
+    bytes_q = Queue()
+
+    audio_segmrnt_thread = Thread(target=audio_segment_process,
+                                  args=(audio_format, bytes_q, input_conn ))
+    audio_segmrnt_thread.start()
 
     # data_recv_conn, data_send_conn = Pipe(duplex=False)
     # audio_segment_proc = Process(target=audio_segment_process,
@@ -86,17 +111,20 @@ def read_transmission(input_conn, radio_recv_ev, radio_link):
     # audio_segment_proc.start()
 
     while (not url_conn.closed and radio_recv_ev.is_set()):
-        bytes = url_conn.read(50024)
-        segment = segment + AudioSegment.from_file(io.BytesIO(bytes), format=audio_format)
-        if segment.duration_seconds >= 2:
-            window = segment[:2000]
-            window = window.set_channels(1)
-            window = window.set_frame_rate(22500)
-            window.export('jezu.wav', format='wav')
-
-            window_v = aud_seg_to_array(window)
-            input_conn.send(get_input_vector(window_v))
-            segment = segment[2000:]
+        bytes = url_conn.read(50240)
+        bytes_q.put(bytes)
+        # segment = segment + AudioSegment.from_file(io.BytesIO(bytes), format=audio_format)
+        # if segment.duration_seconds >= 2:
+        #     window = segment[:2000]
+        #     window = window.set_channels(1)
+        #     window = window.set_frame_rate(22500)
+        #     window.export('jezu.wav', format='wav')
+        #
+        #     window_v = aud_seg_to_array(window)
+        #     input_conn.send(get_input_vector(window_v))
+        #     segment = segment[2000:]
+    bytes_q.put(None)
+    print('halo?')
 
 
 def get_input_vector(song):
