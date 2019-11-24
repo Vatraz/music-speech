@@ -30,11 +30,11 @@ def main(l, sc = False):
     # plt.show()
 
     # ============================================
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=69)
 
     print(X_train)
 
-    filepath = 'siup.hdf5'
+    filepath = '35x03x15.hdf5.hdf5'
     try:
         model = load_model(filepath)
     except:
@@ -49,7 +49,7 @@ def main(l, sc = False):
 
 
     checkpointer = ModelCheckpoint(filepath, verbose=1, save_best_only=True, monitor='acc', save_weights_only=False)
-    history = model.fit(X_train, y_train, epochs=2000, batch_size=200, callbacks=[checkpointer])
+    history = model.fit(X_train, y_train, epochs=4000, batch_size=200, callbacks=[checkpointer])
 
     plt.plot(history.history['acc'])
     plt.title('Model accuracy')
@@ -84,8 +84,8 @@ def test_all(model, t, sc=None):
 
 if __name__ == '__main__':
 
-    # main('zero', sc=False)
+    main('zero', sc=False)
     # #
-    model = load_model('35x03x15.hdf5')
+    model = load_model('35x03x15.hdf5.hdf5')
     for tup in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic','wav', 'g', 't', 'c'):
         test_all(model, tup)
