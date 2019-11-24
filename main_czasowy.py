@@ -107,12 +107,16 @@ def main(model):
 
         if model:
             yy2 = model.predict_classes(X)
+            yy2 =  make_list(yy2, ileX)
             plt.plot(yy2, 'b', alpha=0.8)
+
+        plt.ylabel('Wyjście klasyfikatora')
+        plt.xlabel('Czas [m]')
         plt.show()
 
 if  __name__ == '__main__':
     # make_csv()
-    filepath = 'siup2.hdf5'
+    filepath = 'siup.hdf5'
 
     try:
         model = models.load_model(filepath)

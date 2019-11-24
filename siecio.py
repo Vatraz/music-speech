@@ -40,7 +40,8 @@ def main(l, sc = False):
     except:
         model = Sequential()
 
-        model.add(Dense(35, activation='relu', input_shape=(5,)))
+        model.add(Dense(25, activation='relu', input_shape=(5,)))
+        model.add(Dense(10, activation='relu'))
         model.add(Dense(1, activation='sigmoid'))
         model.compile(loss='binary_crossentropy',
                       optimizer='adam',
@@ -83,8 +84,8 @@ def test_all(model, t, sc=None):
 
 if __name__ == '__main__':
 
-    main('zero', sc=False)
+    # main('zero', sc=False)
     # #
-    model = load_model('siup.hdf5')
+    model = load_model('35x03x15.hdf5')
     for tup in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic','wav', 'g', 't', 'c'):
         test_all(model, tup)
