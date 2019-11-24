@@ -28,7 +28,7 @@ def main(DS_NAME):
     df = pd.DataFrame(speech_data)
     df.to_csv(OUT_PATH + DS_NAME + 's.csv', index=None, header=True)
 
-tup = ['fm']
+tup = ['zet']
 
 for n in tup:
     main(n)

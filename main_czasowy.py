@@ -12,14 +12,14 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import random
-# from tensorflow.python.keras import models
+from tensorflow.python.keras import models
 import os
 
 random.seed()
 def make_csv():
     freq = FREQUENCY
     # model = models.load_model('siup.hdf5')
-    for tup in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic'):
+    for tup in [ 'zet']:
         s = sorted(glob.glob(DATASET_PATH + f'speech_' + tup + '_25_22k/*.wav'), key=lambda x: int(x.split('S_')[-1][:-4]))
         s_f = sorted(glob.glob(DATASET_PATH + f'speech_' + tup + '_22k/*.wav'), key=lambda x: int(x.split('S_')[-1][:-4]))
         m = sorted(glob.glob(DATASET_PATH + f'music_' + tup + '_25_22k/*.wav'), key=lambda x: int(x.split('M_')[-1][:-4]))
@@ -83,14 +83,27 @@ def make_list(y_l, ile):
             y.append(x)
     return y
 
+
 def main(model):
-    for tup in ['fm']:#, 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic']:
-        df = pd.read_csv('czas/' + tup + '.csv', header=0)
+    radio = {
+        'classic': 'RMF Classic',
+        'zet': 'Radio ZET',
+        'jeden': 'Polskie Radio Program I',
+        'dwa': 'Polskie Radio Program II',
+        'trzy': 'Polskie Radio Program III',
+        'antyradio': 'Antyradio',
+        'olsztyn': 'Polskie Radio Olsztyn',
+
+    }
+    for tup in ['olsztyn']:#, 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic']:
+        df  = pd.read_csv('czas/' + tup + '.csv', header=0)
 
         # ============================================
-        ile = 3600
-        X = df.iloc[:ile, 1:]
-        y = df.iloc[:ile, 0]
+
+        czas = 30
+        ile = czas * 30
+        X = df.iloc[-ile:, 1:]
+        y = df.iloc[-ile:, 0]
         ileX = 7
         ile = ile * ileX
         y = make_list(y.values.tolist(), ileX)
@@ -98,21 +111,31 @@ def main(model):
 
         yy = [(1+x*(-1)) for x in y]
         x = list(range(len(y)))
-        plt.fill_between(x, 0,  y,  color='g', alpha=0.4, linewidth=0.0)
-        plt.xticks(np.arange(0, ile+1, ile/6), (0, 20, 40, 60, 80, 100, 120))
-        plt.fill_between(x, 0, yy, color='r', alpha=0.4, linewidth=0.0)
+        plt.fill_between(x, 0,  y,  color='b', alpha=0.7, linewidth=0.0, hatch = 'xxx')
+        podzialka = 20
+        plt.xticks(np.arange(0, ile+1, ile/podzialka), np.arange(0, czas+1, int(czas/podzialka)))
+        # plt.fill_between(x, 0, yy, color='r', alpha=0.7, linewidth=0.0, hatch = '---')
 
         plt.axis('tight')
 
 
         if model:
             yy2 = model.predict_classes(X)
+            yy3 = model.predict(X)
+            yy2 = [x[0] for x in yy2]
+            yy3 = [x[0] for x in yy3]
             yy2 =  make_list(yy2, ileX)
-            plt.plot(yy2, 'b', alpha=0.8)
+            yy3 =  make_list(yy3, ileX)
+            plt.fill_between(x, 0, yy2, color='g', alpha=0.8, linewidth=0.1)
+            # plt.plot(yy3, 'orange', alpha=0.9)
+            # plt.plot([0.5]*ile, 'r', alpha=0.9)
 
+        
+        plt.title(f'Klasyfikacja transmisji dla radia {radio[tup]}')
         plt.ylabel('Wyjście klasyfikatora')
         plt.xlabel('Czas [m]')
         plt.show()
+        
 
 if  __name__ == '__main__':
     # make_csv()
