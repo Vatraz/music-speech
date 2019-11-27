@@ -35,8 +35,8 @@ def learn(n):
 
     features, target = df.values[:, 1:], df.values[:, 0]
     scaler = None
-    scaler = StandardScaler().fit(features)
-    features = scaler.transform(features)
+    # scaler = StandardScaler().fit(features)
+    # features = scaler.transform(features)
 
     # dzielenie na zbior uczacy i testowy
     features_train, features_test, target_train, target_test = train_test_split(
@@ -55,7 +55,6 @@ def learn(n):
 # # ==========================
 def clas(n, clf, scaler):
     df = pd.read_csv(OUT_PATH + n + '.csv', header=0)
-
     # NORMALIZACJA
     # for feature in list(df2.columns)[1:]:
     #     # print(feature)
@@ -82,6 +81,6 @@ def start_clas(f, clf, scaler):
 
 
 clf, scaler = learn('zero')
-for f in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic', 'wav', 'g', 'f', 't', 'c', 'zero'):
+for f in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic', 'wav', 'g', 'hm', 't', 'c', 'zero'):
     start_clas(f, clf, scaler)
 

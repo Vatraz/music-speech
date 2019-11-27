@@ -36,8 +36,8 @@ def draw_mean_feature_table(features_list):
 
 
 if __name__ == '__main__':
-    speech_files, music_files = glob.glob(DATASET_PATH + "speech_25_16k/*.wav"), \
-                                glob.glob(DATASET_PATH + "music_25_16k/*.wav")
+    speech_files, music_files = glob.glob(DATASET_PATH + "speech_fm_25_16k/*.wav"), \
+                                glob.glob(DATASET_PATH + "music_fm_25_16k/*.wav")
 
     shuffle(speech_files)
     shuffle(music_files)

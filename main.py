@@ -1,5 +1,6 @@
 import copy
-from multiprocessing import Process, Event, Queue, Pipe
+from multiprocessing import Process, Event, Pipe
+
 from threading import Thread
 from multiprocessing.connection import wait
 import PySimpleGUI as sg
@@ -13,7 +14,11 @@ from queue import Queue
 
 FRAME_WIDTH = 450
 NUM_FRAMES = 100
+FRQ = 22050
 KILL_MSG = 'order66'
+
+# class MyAudioSegment(AudioSegment):
+
 
 def decode_to_url(link):
     if link.startswith('http') and not link.endswith(('.pls', '.m3u')):
@@ -40,6 +45,12 @@ def decode_to_url(link):
 
 
 def get_format(url_conn):
+    try:
+        eh = url_conn.getheader('icy-br')
+        print(eh)
+    except:
+        pass
+
     content_type = url_conn.getheader('Content-Type')
     if(content_type == 'audio/mpeg'):
         return 'mp3'
@@ -52,6 +63,8 @@ def get_format(url_conn):
     else:
         print('Unknown content type "' + content_type + '". Assuming mp3.')
         return '.mp3'
+
+
 
 
 # def audio_segment_process(audio_format, data_conn, input_conn):
@@ -73,6 +86,15 @@ def get_format(url_conn):
 #             window_v = aud_seg_to_array(window)
 #             input_conn.send(get_input_vector(window_v))
 #             segment = segment[2000:]
+def del_silence(sound, silence_threshold=-200.0, chunk_size=10):
+    trim_start, trim_end = 0, 0
+    while sound[trim_start:trim_start+chunk_size].dBFS < silence_threshold and trim_start < len(sound):
+        trim_start += chunk_size
+    while sound.reverse()[trim_end:trim_end + chunk_size].dBFS < silence_threshold and trim_end < len(sound):
+        trim_end += chunk_size
+
+    return sound[trim_start:-trim_end]
+
 
 def audio_segment_process(audio_format, bytes_q, input_conn):
     segment = AudioSegment.empty()
@@ -80,17 +102,25 @@ def audio_segment_process(audio_format, bytes_q, input_conn):
         bytes = bytes_q.get(timeout=5)
         if bytes is None:
             break
-
-        segment = segment + AudioSegment.from_file(io.BytesIO(bytes), format=audio_format)
+        print(len(bytes))
+        converted = AudioSegment.from_file(io.BytesIO(bytes), format=audio_format)
+        segment = segment + converted
+        print(segment.duration_seconds)
         if segment.duration_seconds >= 2:
             window = segment[:2000]
-            window = window.set_channels(1)
-            window = window.set_frame_rate(22500)
+            if window.channels != 1:
+                window = window.set_channels(1)
+            if window.sample_width != 2:
+                window.set_sample_width(2)
+            if window.frame_rate != FRQ:
+                window = window.set_frame_rate(FRQ)
             window.export('jezu.wav', format='wav')
-
+            print('siup')
             window_v = aud_seg_to_array(window)
+            print('ehh')
             input_conn.send(get_input_vector(window_v))
-            segment = segment[2000:]
+            # segment = segment[2000:]
+            segment = AudioSegment.empty()
 
 
 def read_transmission(input_conn, radio_recv_ev, radio_link):
@@ -111,8 +141,8 @@ def read_transmission(input_conn, radio_recv_ev, radio_link):
     # audio_segment_proc.start()
 
     while (not url_conn.closed and radio_recv_ev.is_set()):
-        bytes = url_conn.read(50240)
-        bytes_q.put(bytes)
+        bytes_q.put(url_conn.read(10240))
+        # bytes_q.put(bytes)
         # segment = segment + AudioSegment.from_file(io.BytesIO(bytes), format=audio_format)
         # if segment.duration_seconds >= 2:
         #     window = segment[:2000]
@@ -145,13 +175,15 @@ def aud_seg_to_array(segment):
     return np.array(samples)
 
 
-
-
 def classifier(input_conn, output_send_conn, start_event):
     from tensorflow.python import keras
-    model = keras.models.load_model('siup2.hdf5')
+    import time
+    import csv
+    model = keras.models.load_model('hit.hdf5')
+    f = open(r'krok.csv', 'a')
     start_event.set()
     while True:
+        pass
         try:
             x_v = input_conn.recv()
         except EOFError as e:
@@ -164,6 +196,10 @@ def classifier(input_conn, output_send_conn, start_event):
             print(x_v)
             prediction = model.predict(x_v)
             print(prediction)
+
+            writer = csv.writer(f)
+            writer.writerow([time.time(), prediction])
+
             output_send_conn.send(prediction)
 
 
@@ -178,7 +214,7 @@ def main():
         [
             sg.Text('Wynik', size=(6, 1)),
             sg.ProgressBar(1, orientation='h', size=(8, 20), key='prediction_bar'),
-            sg.Text('-,--%', size=(6, 1), key='prediction_prc'),
+            sg.Text('-,--', size=(6, 1), key='prediction_prc'),
             sg.Text('-', size=(20, 1), key='prediction_cls')
         ],
         [
@@ -213,7 +249,7 @@ def main():
         if output_recv_conn.poll():
             prediction = output_recv_conn.recv()[0][0]
             prediction_bar.UpdateBar(prediction)
-            prediction_prc.Update(f'{100*prediction:2.2f}%')
+            prediction_prc.Update(f'{prediction:1.2f}')
             if prediction > 0.5:
                 prediction_cls.Update('MUZYKA')
             else:

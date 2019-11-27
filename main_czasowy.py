@@ -48,13 +48,13 @@ def make_csv():
         files = []
         typy = []
         index = 0
+        poprzedni = 0
         while True:
             try:
                 start = p_f[index]
                 start = '_25_22k'.join(start.split('_22k'))
                 for plik_do in [x for x in p if x.startswith(start)]:
                     files.append(plik_do)
-
                     typy.append(typ_p)
 
             except:
@@ -93,14 +93,15 @@ def main(model):
         'trzy': 'Polskie Radio Program III',
         'antyradio': 'Antyradio',
         'olsztyn': 'Polskie Radio Olsztyn',
+        'fm': 'RMF FM',
 
     }
-    for tup in ['olsztyn']:#, 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic']:
+    for tup in ['fm']:#, 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic']:
         df  = pd.read_csv('czas/' + tup + '.csv', header=0)
 
         # ============================================
 
-        czas = 30
+        czas = 40
         ile = czas * 30
         X = df.iloc[-ile:, 1:]
         y = df.iloc[-ile:, 0]
@@ -111,7 +112,7 @@ def main(model):
 
         yy = [(1+x*(-1)) for x in y]
         x = list(range(len(y)))
-        plt.fill_between(x, 0,  y,  color='b', alpha=0.7, linewidth=0.0, hatch = 'xxx')
+        plt.plot(x, y,  color='b', alpha=0.9, linewidth=2)
         podzialka = 20
         plt.xticks(np.arange(0, ile+1, ile/podzialka), np.arange(0, czas+1, int(czas/podzialka)))
         # plt.fill_between(x, 0, yy, color='r', alpha=0.7, linewidth=0.0, hatch = '---')
@@ -126,7 +127,7 @@ def main(model):
             yy3 = [x[0] for x in yy3]
             yy2 =  make_list(yy2, ileX)
             yy3 =  make_list(yy3, ileX)
-            plt.fill_between(x, 0, yy2, color='g', alpha=0.8, linewidth=0.1)
+            plt.fill_between(x, 0, yy2, color='g', alpha=0.9, linewidth=0.1)
             # plt.plot(yy3, 'orange', alpha=0.9)
             # plt.plot([0.5]*ile, 'r', alpha=0.9)
 
@@ -139,7 +140,7 @@ def main(model):
 
 if  __name__ == '__main__':
     # make_csv()
-    filepath = 'siup.hdf5'
+    filepath = '5x15x10 spoko dziala gosciu.hdf5'
 
     try:
         model = models.load_model(filepath)

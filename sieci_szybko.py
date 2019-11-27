@@ -16,7 +16,7 @@ from tensorflow.python.keras.models import load_model
 
 def main(l, sc = False):
     # ============================================
-    dataset = pd.read_csv(OUT_PATH + 'zero' + '.csv', header=0)
+    dataset = pd.read_csv(OUT_PATH + 'hm' + '.csv', header=0)
 
     # ============================================
     X = dataset.iloc[:,1:]
@@ -41,9 +41,8 @@ def main(l, sc = False):
         model = Sequential()
 
         model.add(Dense(5, activation='relu', input_shape=(5,)))
-        model.add(Dense(25, activation='relu'))
-        model.add(Dense(25, activation='relu'))
         model.add(Dense(15, activation='relu'))
+        model.add(Dense(10, activation='relu'))
         model.add(Dense(1, activation='sigmoid'))
         model.compile(loss='binary_crossentropy',
                       optimizer='adam',

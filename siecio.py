@@ -18,7 +18,7 @@ from tensorflow.python.keras.models import load_model
 
 def main(l, sc = False):
     # ============================================
-    dataset = pd.read_csv(OUT_PATH + 'hm' + '.csv', header=0)
+    dataset = pd.read_csv(OUT_PATH + l + '.csv', header=0)
 
     # ============================================
     X = dataset.iloc[:,1:]
@@ -32,17 +32,18 @@ def main(l, sc = False):
     # plt.show()
 
     # ============================================
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=69)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=40)
 
     print(X_train)
 
-    filepath = 'siup.hdf5'
+    filepath = 'hit.hdf5'
     try:
         model = load_model(filepath)
     except:
         model = Sequential()
 
-        model.add(Dense(35, activation='relu', input_shape=(5,)))
+        model.add(Dense(5, activation='relu', input_shape=(5,)))
+        model.add(Dense(15, activation='relu'))
         model.add(Dense(10, activation='relu'))
         model.add(Dense(1, activation='sigmoid'))
         model.compile(loss='binary_crossentropy',
@@ -51,7 +52,7 @@ def main(l, sc = False):
 
 
     checkpointer = ModelCheckpoint(filepath, verbose=1, save_best_only=True, monitor='acc', save_weights_only=False)
-    history = model.fit(X_train, y_train, epochs=500, batch_size=200, callbacks=[checkpointer])
+    history = model.fit(X_train, y_train, verbose=0, epochs=3000, batch_size=400, callbacks=[checkpointer])
 
     plt.plot(history.history['acc'])
     plt.title('Model accuracy')
@@ -83,7 +84,6 @@ def test(model, t, scaler = None):
 def test_all(model, t, sc=None):
     print(t)
 
-    s_f = len(glob.glob(DATASET_PATH + f'speech_' + t + '_25_22k/*.wav'))
     m_f = len(glob.glob(DATASET_PATH + f'music_' + t + '_25_22k/*.wav'))
 
     a = test(model, t, sc)
@@ -91,16 +91,17 @@ def test_all(model, t, sc=None):
         b = test(model, t+'m', sc)
         c = test(model, t+'s', sc)
         print(f'{a[1]*100:.2f}\\% \\\\')
-        print  (f'{divmod(m_f*2, 60)[0]}m {divmod(m_f*2, 60)[1]}s & {b[1]*100:.2f}\\% & {divmod(180*60- m_f*2, 60)[0]}m {divmod(180*60- m_f*2, 60)[1]}s & {c[1]*100:.2f}\\% \\\\')
+        print (f'{divmod(m_f*2, 60)[0]}m {divmod(m_f*2, 60)[1]}s & {b[1]*100:.2f}\\% & {divmod(180*60- m_f*2, 60)[0]}m {divmod(180*60- m_f*2, 60)[1]}s & {c[1]*100:.2f}\\% \\\\')
     except:
         pass
 
 
 if __name__ == '__main__':
 
-    # main('zero', sc=False)
-    #
-    # model = load_model('siup.hdf5')
-    model = load_model('siup.hdf5')
+    # main('hm', sc=False)
+
+    # model = load_model('pukiconajlepszy550.hdf5')
+    # model = load_model('hit.hdf5')
+    model = load_model('hit.hdf5')
     for tup in ('hm', 'anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic','wav', 'g', 't', 'c'):
         test_all(model, tup)

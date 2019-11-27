@@ -17,16 +17,15 @@ def timestamps(wavedata, frame_width, sample_rate):
 
 
 def zcr_ste(samples: np.ndarray, frame_width: int, num_frames: int):
-    zcr_v, ste_v = [], []
-    for i in range(num_frames):
-        frame = samples[i*frame_width:(i+1)*frame_width]
-        zcr = 1/(2*frame_width) * np.count_nonzero(np.diff(np.sign(frame)))
-        zcr_v.append(zcr)
-        ste = np.sum(np.square(frame, dtype=np.int64))
-        if ste < 0:
-            print("rhh")
-        ste_v.append(ste)
-    return np.array(zcr_v), np.array(ste_v)
+    chunks = np.array_split(samples, num_frames)
+
+    f_zcr = lambda x: 1 / (2 * frame_width) * np.count_nonzero(np.diff(np.sign(x)))
+    f_ste = lambda x: np.sum(np.square(x, dtype=np.int64))
+
+    ste_v = np.array(list(map(f_ste, chunks)))
+    zcr_v = np.array(list(map(f_zcr, chunks)))
+    return zcr_v, ste_v
+
 
 
 def zero_crossing_rate(wavedata, frame_width):
@@ -44,30 +43,6 @@ def zero_crossing_rate(wavedata, frame_width):
     return np.asarray(zcr)
 
 
-def zero_crossing_rate2(wavedata, frame_width, num_frames):
-    zcr = []
-
-    for i in range(num_frames):
-        frame = wavedata[i*frame_width:(i+1)*frame_width]
-        zc = 1/(2*frame_width) * np.count_nonzero(np.diff(np.sign(frame)))
-        zcr.append(zc)
-
-    return np.asarray(zcr)
-
-
-def short_time_energy2(wavedata, frame_width, num_frames):
-    ste = []
-
-    for i in range(num_frames):
-        start = i * frame_width
-        stop = np.min([(start + frame_width - 1), len(wavedata)])
-        energy = np.sum(np.square(np.asarray(wavedata[start:stop])))
-        ste.append(energy)
-        if energy < 0:
-            print("OHO")
-    return np.asarray(ste)
-
-
 def short_time_energy(wavedata, frame_width):
     num_frames = int(np.ceil(len(wavedata) / frame_width))
 
@@ -81,7 +56,6 @@ def short_time_energy(wavedata, frame_width):
         if energy < 0:
             print("OHO")
     return np.asarray(ste)
-
 
 def zcr_mean_value(zcr):
     return np.mean(zcr)
@@ -104,8 +78,9 @@ def zcr_exceed_th(zcr_v, zcr_mean, control_coeff=1.5):
     return np.sum([sgn(zcr - (m - control_coeff*zcr_mean)) + 1 for zcr in zcr_v]) / (2*n)
 
 
+
 def zcr_third_central_moment(zcr_v):
-    return moment(zcr_v, moment=3)
+    return moment(zcr_v, moment=3)*100
 
 
 def zcr_std_of_fod(zcr_v):
@@ -116,7 +91,7 @@ def zcr_std_of_fod(zcr_v):
 def ste_mean(ste):
     return np.mean(ste)
 
-def ste_mler(ste_v, control_coeff=0.15):
+def ste_mler(ste_v, control_coeff=0.2):
     ste_mean = np.mean(ste_v)
     n = len(ste_v)
 
@@ -151,6 +126,7 @@ def read_audio_file(filepath, frame_width, zcr_threshold):
 
 def get_audio_features(filepath, frame_width, sound_type):
     samplerate, wavedata = wavfile.read(filepath)
+    # wavedata = wavedata[:22050]
     zcr = zero_crossing_rate(wavedata, frame_width)
     ste = short_time_energy(wavedata, frame_width)
     zcr_mean = zcr_mean_value(zcr)
