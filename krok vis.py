@@ -17,14 +17,22 @@ import datetime
 myFmt = mdates.DateFormatter('%H:%M')
 
 
-df = pd.read_csv('krok.csv')
+df = pd.read_csv('kasz.csv')
 df.columns = ['t', 'y']
 df['y'] = df['y'].map(lambda x: float(x[2:-2]))
 
-t = [datetime.datetime.fromtimestamp(tt).strftime('%H:%M:%S') for tt in df['t'].values]
-print(df)
+tt = df['t'].values
 
-plt.plot(t[:100], df['y'].values[:100])
-plt.xticks(np.arange(0, 100, 10))
-plt.gcf().autofmt_xdate()
-plt.show()
+
+for i in range(len(tt)-1):
+    tt[i] = tt[i+1] - tt[i]
+print(tt)
+print(np.mean(tt[:-1]))
+
+# t = [datetime.datetime.fromtimestamp(tt).strftime('%H:%M:%S') for tt in df['t'].values]
+# print(df)
+#
+# plt.plot(t[:100], df['y'].values[:100])
+# plt.xticks(np.arange(0, 100, 10))
+# plt.gcf().autofmt_xdate()
+# plt.show()

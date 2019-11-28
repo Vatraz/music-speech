@@ -1,17 +1,19 @@
 import copy
-from multiprocessing import Process, Event, Pipe
+from multiprocessing import Process, Event, Pipe, Queue
 
 from threading import Thread
 from multiprocessing.connection import wait
 import PySimpleGUI as sg
 import urllib.request
+
+import scipy
 from pydub import AudioSegment
 import io
 from functions import zcr_ste, zcr_diff_mean, zcr_third_central_moment, zcr_exceed_th, zcr_std_of_fod, ste_mler
 import numpy as np
 from pydub.playback import play
-from queue import Queue
-
+from queue import Empty
+import time
 FRAME_WIDTH = 450
 NUM_FRAMES = 100
 FRQ = 22050
@@ -40,10 +42,6 @@ def decode_to_url(link):
                     return line
 
 
-
-    # return 'http://br-brklassik-live.cast.addradio.de/br/brklassik/live/mp3/128/stream.mp3'
-
-
 def get_format(url_conn):
     try:
         eh = url_conn.getheader('icy-br')
@@ -65,100 +63,51 @@ def get_format(url_conn):
         return '.mp3'
 
 
-
-
-# def audio_segment_process(audio_format, data_conn, input_conn):
-#     segment = AudioSegment.empty()
-#     while True:
-#         try:
-#             bytes = data_conn.recv()
-#         except EOFError as e:
-#             print(e)
-#             break
-#
-#         segment = segment + AudioSegment.from_file(io.BytesIO(bytes), format=audio_format)
-#         if segment.duration_seconds >= 2:
-#             window = segment[:2000]
-#             window = window.set_channels(1)
-#             window = window.set_frame_rate(22500)
-#             window.export('jezu.wav', format='wav')
-#
-#             window_v = aud_seg_to_array(window)
-#             input_conn.send(get_input_vector(window_v))
-#             segment = segment[2000:]
-def del_silence(sound, silence_threshold=-200.0, chunk_size=10):
-    trim_start, trim_end = 0, 0
-    while sound[trim_start:trim_start+chunk_size].dBFS < silence_threshold and trim_start < len(sound):
-        trim_start += chunk_size
-    while sound.reverse()[trim_end:trim_end + chunk_size].dBFS < silence_threshold and trim_end < len(sound):
-        trim_end += chunk_size
-
-    return sound[trim_start:-trim_end]
-
-
 def audio_segment_process(audio_format, bytes_q, input_conn):
-    segment = AudioSegment.empty()
+    sampls = np.array(1, dtype=np.int16)
     while True:
-        bytes = bytes_q.get(timeout=5)
-        if bytes is None:
+        try:
+            bts = bytes_q.get(timeout=5)
+        except Empty:
             break
-        print(len(bytes))
-        converted = AudioSegment.from_file(io.BytesIO(bytes), format=audio_format)
-        segment = segment + converted
-        print(segment.duration_seconds)
-        if segment.duration_seconds >= 2:
-            window = segment[:2000]
-            if window.channels != 1:
-                window = window.set_channels(1)
-            if window.sample_width != 2:
-                window.set_sample_width(2)
-            if window.frame_rate != FRQ:
-                window = window.set_frame_rate(FRQ)
-            window.export('jezu.wav', format='wav')
-            print('siup')
-            window_v = aud_seg_to_array(window)
-            print('ehh')
-            input_conn.send(get_input_vector(window_v))
-            # segment = segment[2000:]
-            segment = AudioSegment.empty()
+        if bts is None:
+            break
+        ha = AudioSegment.from_file(io.BytesIO(bts), format=audio_format)
+        ha = ha.set_channels(1)
+        ha = ha.set_frame_rate(22050)
+        ha = ha.set_sample_width(2)
+
+        converted = np.trim_zeros(ha.get_array_of_samples()[100:], 'f')
+        sampls = np.append(sampls, converted)
+
+        if sampls.size >= 2*FRQ:
+            scipy.io.wavfile.write('ahh.wav', FRQ, sampls[:2*FRQ])
+            input_conn.send(get_input_vector(sampls[:2*FRQ]))
+            sampls = sampls[2*FRQ:]
 
 
 def read_transmission(input_conn, radio_recv_ev, radio_link):
     radio_url = decode_to_url(radio_link)
     url_conn = urllib.request.urlopen(radio_url)
     audio_format = get_format(url_conn)
-    # segment = AudioSegment.empty()
     bytes_q = Queue()
 
     audio_segmrnt_thread = Thread(target=audio_segment_process,
                                   args=(audio_format, bytes_q, input_conn ))
     audio_segmrnt_thread.start()
-
     # data_recv_conn, data_send_conn = Pipe(duplex=False)
     # audio_segment_proc = Process(target=audio_segment_process,
-    #                              args=(audio_format, data_recv_conn, input_conn ))
-
+    #                              args=(audio_format, bytes_q, input_conn ))
     # audio_segment_proc.start()
-
     while (not url_conn.closed and radio_recv_ev.is_set()):
         bytes_q.put(url_conn.read(10240))
-        # bytes_q.put(bytes)
-        # segment = segment + AudioSegment.from_file(io.BytesIO(bytes), format=audio_format)
-        # if segment.duration_seconds >= 2:
-        #     window = segment[:2000]
-        #     window = window.set_channels(1)
-        #     window = window.set_frame_rate(22500)
-        #     window.export('jezu.wav', format='wav')
-        #
-        #     window_v = aud_seg_to_array(window)
-        #     input_conn.send(get_input_vector(window_v))
-        #     segment = segment[2000:]
+
     bytes_q.put(None)
     print('halo?')
 
 
 def get_input_vector(song):
-    zcr_v, ste_v = zcr_ste(np.array(song), FRAME_WIDTH, NUM_FRAMES)
+    zcr_v, ste_v = zcr_ste(song, FRAME_WIDTH, NUM_FRAMES)
     zcr_mean = zcr_v.mean()
     input_vector = [
         zcr_diff_mean(zcr_v, zcr_mean),
@@ -172,6 +121,7 @@ def get_input_vector(song):
 
 def aud_seg_to_array(segment):
     samples = segment.get_array_of_samples()
+    # samples = del_silence(samples)
     return np.array(samples)
 
 
@@ -180,7 +130,7 @@ def classifier(input_conn, output_send_conn, start_event):
     import time
     import csv
     model = keras.models.load_model('hit.hdf5')
-    f = open(r'krok.csv', 'a')
+    f = open(r'kasz.csv', 'a')
     start_event.set()
     while True:
         pass
