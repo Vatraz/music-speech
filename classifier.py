@@ -1,86 +1,71 @@
-import pandas as pd
-import numpy as np
-from sklearn import preprocessing
-from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score
+from tensorflow.python.keras.callbacks import ModelCheckpoint
+from numpy import loadtxt
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import Dense
 from globals import OUT_PATH, DS_NAME
-from sklearn.preprocessing import StandardScaler
-import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn import preprocessing
+import seaborn as sns
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import Dense, Dropout
+from tensorflow.python.keras.models import load_model
 
 
-def learn(n):
-    df = pd.read_csv(OUT_PATH + n + '.csv', header=0)
-    corr = df.corr()
-    sns.heatmap(corr,
-                xticklabels=corr.columns.values,
-                yticklabels=corr.columns.values)
+class Classifier():
+    def __init__(self, model_path):
+        self.model = load_model(model_path)
+
+    def predict(self, X):
+        return self.model.predict(X)
+
+
+
+def train(l=None, sc = False):
+    dataset = pd.read_csv(OUT_PATH + 'hm' + '.csv', header=0)
+
+    X = dataset.iloc[:,1:]
+    y = dataset.iloc[:,0]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=997)
+
+    print(X_train)
+
+    filepath = 'siup.hdf5'
+    try:
+        model = load_model(filepath)
+    except:
+        model = Sequential()
+
+        model.add(Dense(5, activation='relu', input_shape=(5,)))
+        model.add(Dense(15, activation='relu'))
+        model.add(Dense(10, activation='relu'))
+        model.add(Dense(1, activation='sigmoid'))
+        model.compile(loss='binary_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+
+
+    checkpointer = ModelCheckpoint(filepath, verbose=1, save_best_only=True, monitor='acc', save_weights_only=False)
+    history = model.fit(X_train, y_train, epochs=500, batch_size=200, callbacks=[checkpointer])
+
+    plt.plot(history.history['acc'])
+    plt.title('Model accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Test'], loc='upper left')
     plt.show()
-    # print(df.describe(include='all'))
-    clf = GaussianNB()
 
-    # ===================================
-    # One-Hot Encoder - audio type
-    # NORMALIZACJA
+    #  ===========================================
+    score = model.evaluate(X_test, y_test,verbose=1)
+    print(score)
 
-    # ds = {}
-    # for feature in list(df.columns)[1:]:
-    #     mean, std = np.mean(df[feature]), np.std(df[feature])
-    #     ds[feature] = std
-    #     # print(std)
-    #     df.loc[:, feature] = (df[feature]) / std
-    # ------------
-    print(df.describe(include='all'))
-
-    features, target = df.values[:, 1:], df.values[:, 0]
-    scaler = None
-    # scaler = StandardScaler().fit(features)
-    # features = scaler.transform(features)
-
-    # dzielenie na zbior uczacy i testowy
-    features_train, features_test, target_train, target_test = train_test_split(
-        features, target, test_size=0.29, random_state=100)
-    #  ----------
-    # print(features)
-    # print(target)
-    clf.fit(features_train, target_train)
-
-    target_pred = clf.predict(features_test)
-    print('acc:', accuracy_score(target_test, target_pred, normalize=True))
-    return clf, scaler
-
-
-
-# # ==========================
-def clas(n, clf, scaler):
-    df = pd.read_csv(OUT_PATH + n + '.csv', header=0)
-    # NORMALIZACJA
-    # for feature in list(df2.columns)[1:]:
-    #     # print(feature)
-    #     std = ds[feature]
-    #     # print(std)
-    #     df2.loc[:, feature] = (df2[feature]) / std
-    # ------------
-    # print(df2.describe(include='all'))
-    features, target = df.values[:, 1:], df.values[:, 0]
-    if scaler is not None:
-        features = scaler.transform(features)
-
-    target_pred = clf.predict(features)
-    # target_pred_p = clf.predict_proba(features)
-    # for i in zip(target_pred_p, target_pred):
-    #     print(i)
-    print(n, 'custom acc:', accuracy_score(target, target_pred, normalize=True))
-
-
-def start_clas(f, clf, scaler):
-    clas(f, clf, scaler)
-    clas(f + 'm', clf, scaler)
-    clas(f + 's', clf, scaler)
-
-
-clf, scaler = learn('zero')
-for f in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic', 'wav', 'g', 'hm', 't', 'c', 'zero'):
-    start_clas(f, clf, scaler)
-
+if __name__ == '__main__':
+    train()
+    # main('zero', sc=False)
+    # #
+    # model = load_model('siup.hdf5')
+    # for tup in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic'):
+    #     test_all(model, tup)

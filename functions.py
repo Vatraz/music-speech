@@ -1,9 +1,9 @@
 import numpy as np
+from pydub import AudioSegment
 from scipy.stats import moment
 from scipy.io import wavfile
 from statistics import stdev
 from math import copysign
-
 
 def sgn(x):
     if x > 0:
@@ -51,7 +51,7 @@ def short_time_energy(wavedata, frame_width):
     for i in range(num_frames - 1):
         start = i * frame_width
         stop = np.min([(start + frame_width - 1), len(wavedata)])
-        energy = np.sum(np.square(np.asarray(wavedata[start:stop])))
+        energy = np.sum(np.square(wavedata[start:stop]))
         ste.append(energy)
         if energy < 0:
             print("OHO")
@@ -125,10 +125,15 @@ def read_audio_file(filepath, frame_width, zcr_threshold):
 
 
 def get_audio_features(filepath, frame_width, sound_type):
-    samplerate, wavedata = wavfile.read(filepath)
+    # samplerate, wavedata = wavfile.read(filepath)
     # wavedata = wavedata[:22050]
-    zcr = zero_crossing_rate(wavedata, frame_width)
-    ste = short_time_energy(wavedata, frame_width)
+    ha = AudioSegment.from_file(filepath, format='wav')
+    ha = ha.set_channels(1)
+    ha = ha.set_frame_rate(22050)
+    ha = ha.set_sample_width(2)
+    wavedata = np.array(ha.get_array_of_samples(), dtype=np.int16)
+    zcr, ste = zcr_ste(wavedata, frame_width, 100)
+    # ste = short_time_energy(wavedata, frame_width)
     zcr_mean = zcr_mean_value(zcr)
     data = {
         'type': sound_type,
@@ -141,3 +146,15 @@ def get_audio_features(filepath, frame_width, sound_type):
     }
     return data
 
+
+def get_input_vector(song, frame_width, num_frames):
+    zcr_v, ste_v = zcr_ste(song, frame_width, num_frames)
+    zcr_mean = zcr_v.mean()
+    input_vector = [
+        zcr_diff_mean(zcr_v, zcr_mean),
+        zcr_third_central_moment(zcr_v),
+        zcr_exceed_th(zcr_v, zcr_mean),
+        zcr_std_of_fod(zcr_v),
+        ste_mler(ste_v),
+    ]
+    return np.array([input_vector])

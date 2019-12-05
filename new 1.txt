@@ -1,0 +1,110 @@
+\begin{thebibliography}{10}
+
+\bibitem{review}
+{A. I. Al-Shoshan: Speech and Music Classification and Separation: A Review.
+  \textit{Journal of King Saud University - Engineering Sciences}, vol. 19(1),
+  ss. 118-127. King Saud University, Rijad (Arabia Saudyjska) 1998.}
+
+\bibitem{kompresja}
+{L. Grad: Kompresja stratna dźwięku. \textit{Zeszyty Naukowe Warszawskiej
+  Wyższej Szkoły informatyki}, vol. 2, ss. 39-58. Zeszyty Naukowe
+  Warszawskiej Wyższej Szkoły informatyki, Warszawa 2007.}
+
+\bibitem{techniques}
+{J. {Harrington}, S. {Cassidy}: \textit{Techniques in Speech Acoustics}, ss.
+  143-145. Springer Science and Business Media, Dordrecht (Holandia) 2001.}
+
+\bibitem{digital}
+{W. Hoeg, T. Lauterbach: \textit{Digital Audio Broadcasting: Principles and
+  Applications of DAB, DAB + and DMB}, ss. 29-43. Wiley, Hoboken (USA) 2009.}
+  
+
+\bibitem{uniwersytet}
+{W. Kołodziejczyk, P. Stępka: Radio internetowe – szanse i wyzwania.
+  \textit{Studia medioznawcze}, vol. 25(2), ss. 129. Instytut Dziennikarstwa
+  Uniwerystetu Warszawskiego, Warszawa 1989.}
+      
+\bibitem{content}
+{C.C.J. {Kuo}, T. {Zhang}: \textit{Content-Based Audio Classification and
+  Retrieval for Audiovisual Data Parsing}, vol. 1, ss. 316-319. Springer
+  Science and Business Media, New York (USA) 2001.}
+
+\bibitem{raport}
+{Krajowa Rada Radiofonii i Telewizji: \textit{Informacja o audytorium radiowym
+  w Polsce w 2018 roku} (data dostępu 11.11.2019 r.)
+  http://www.krrit.gov.pl/.}
+  
+    
+\bibitem{cepstrum}
+{K. Łopatka: \textit{Parametryzacja sygnału mowy} (data dostępu 11.11.2019
+  r.) https://sound.eti.pg.gda.pl/}.
+  
+\bibitem{neurony}
+{M. Nielsen: \textit{Neural Networks and Deep Learning} (data dostępu
+  11.11.2019 r.) http://neuralnetworksanddeeplearning.com/}.
+  
+\bibitem{lstm}
+{C. Olah: \textit{Understanding LSTM Networks} (data dostępu 11.11.2019 r.)
+  http://colah.github.io/posts/2015-08-Understanding-LSTMs/.}
+
+\bibitem{extration}
+{S. Rossignol, X. Rodet, J. Soumagne, J. Colette, P. Depalle: Feature
+  extraction and temporal segmentation of acoustic signals. \textit{ICMC:
+  International Computer Music Conference}. ICMC, Ann Arbor (USA) 1998.}
+
+
+\bibitem{saunders}
+{J. Saunders: Real-time discrimination of broadcast speech/music.
+  \textit{1996 IEEE International Conference on Acoustics, Speech, and Signal
+  Processing Conference Proceedings}, vol. 2, ss. 993-996. IEEE, Atlanta (USA)
+  1996}.
+  
+\bibitem{construction}
+{E. Scheirer, M. Slaney: Construction and evaluation of a robust multifeature
+  speech/music discriminator. \textit{1997 IEEE International Conference on
+  Acoustics, Speech, and Signal Processing}, vol. 2, ss. 1331-1334. IEEE,
+  Munich (Niemcy) 1990.}
+
+\bibitem{gil}
+{B. Slatkin: \textit{Efektywny Python}, ss. 136-162. Helion, Gliwice 2015.}
+
+\bibitem{adblockradio}
+{A. Storelli: \textit{Adblock Radio} (data dostępu 11.11.2019 r.)
+  https://www.adblockradio.com/}.
+  
+\bibitem{sun_zhou}
+{Y. Sun, J. Zhou: Research on Algorithm of Segment and Classification of audio
+  in Broadcast. \textit{2017 10th International Symposium on Computational
+  Intelligence and Design}, vol. 1, ss. 316-319. IEEE, Hangzhou (Chiny) 2017.}
+
+\bibitem{shazam}
+{A. Wang: An industrial-strength audio search algorithm. \textit{Proceedings of
+  the 4 th International Conference on Music Information Retrieval}. ISMIR,
+  Baltimore (USA) 2003.}
+
+\bibitem{pcm}
+{A. Yadav: \textit{Digital Communication}, ss. 1-35. Laxmi Publications New
+  Delhi (Indie) 2009.}
+
+\bibitem{ffmpeg}
+{http: \textit{FFmpeg} (data dostępu 11.11.2019 r.) https://www.ffmpeg.org/}.
+
+\bibitem{gtzan}
+{http: \textit{GTZAN music/speech collection} (data dostępu 11.11.2019 r.)
+  http://marsyas.info/}.
+
+\bibitem{dokumentacja}
+{http: \textit{Python 3.6.9 documentation} (data dostępu 11.11.2019 r.)
+  https://docs.python.org/3.6.}
+
+
+
+
+
+
+
+
+
+
+
+\end{thebibliography}

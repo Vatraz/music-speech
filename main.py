@@ -2,53 +2,59 @@ import copy
 from multiprocessing import Process, Event, Pipe, Queue
 
 from threading import Thread
-from multiprocessing.connection import wait
 import PySimpleGUI as sg
 import urllib.request
 
-import scipy
 from pydub import AudioSegment
 import io
-from functions import zcr_ste, zcr_diff_mean, zcr_third_central_moment, zcr_exceed_th, zcr_std_of_fod, ste_mler
+from classifier import Classifier
+from functions import get_input_vector
 import numpy as np
-from pydub.playback import play
 from queue import Empty
-import time
-FRAME_WIDTH = 450
+from http.client import BadStatusLine
+from urllib.error import URLError
+
+FRAME_WIDTH = 441
 NUM_FRAMES = 100
 FRQ = 22050
-KILL_MSG = 'order66'
 
-# class MyAudioSegment(AudioSegment):
+class MyAudioSegment(AudioSegment):
+    @classmethod
+    def from_bytes(cls, b, f):
+        segment = AudioSegment.from_file(io.BytesIO(b), format=f)
+        segment = segment.set_channels(1).set_frame_rate(FRQ).set_sample_width(2)
+        return segment
+
+    def get_array_of_samples(self, *args, **kwargs):
+        return np.array(super().get_array_of_samples(*args, **kwargs))
+
 
 
 def decode_to_url(link):
     if link.startswith('http') and not link.endswith(('.pls', '.m3u')):
         return link
-
     if link.startswith('http'):
         open_fun = urllib.request.urlopen
+        line_proc = lambda x: x.decode("utf-8")
     else:
         open_fun = open
+        line_proc = lambda x: x
     if link.endswith('.m3u'):
         with open_fun(link) as file:
             for line in file:
+                line = line_proc(line)
+
                 if not line.startswith('#') and len(line) > 1:
                     return line
     if link.endswith('.pls'):
-        with open_fun(link) as remotefile:
-            for line in remotefile:
-                if not line.startswith('#') and len(line) > 1:
-                    return line
+        with open_fun(link) as file:
+            for line in file:
+                line = line_proc(line)
+                if 'http' in line:
+                    return line.split('=')[1]
 
 
 def get_format(url_conn):
-    try:
-        eh = url_conn.getheader('icy-br')
-        print(eh)
-    except:
-        pass
-
     content_type = url_conn.getheader('Content-Type')
     if(content_type == 'audio/mpeg'):
         return 'mp3'
@@ -56,15 +62,23 @@ def get_format(url_conn):
         return 'aac'
     elif(content_type == 'application/ogg' or content_type == 'audio/ogg'):
         return 'ogg'
-    elif(content_type == 'audio/x-mpegurl'):
-        print('Sorry, M3U playlists are currently not supported')
     else:
-        print('Unknown content type "' + content_type + '". Assuming mp3.')
-        return '.mp3'
+        print('Nieznany format audio "' + content_type + '". Sprawdź adres.')
+        return None
+
+def get_bsize(url_conn):
+
+    bitrate = url_conn.getheader('icy-br')
+    if bitrate:
+        bitrate = bitrate.split(',')[0]
+        b_size = (int(bitrate)) * 125
+    else:
+        b_size = 16000
+    return b_size
 
 
-def audio_segment_process(audio_format, bytes_q, input_conn):
-    sampls = np.array(1, dtype=np.int16)
+def audio_segment_proc(audio_format, bytes_q, input_conn):
+    samples = np.array(1, dtype=np.int16)
     while True:
         try:
             bts = bytes_q.get(timeout=5)
@@ -72,88 +86,62 @@ def audio_segment_process(audio_format, bytes_q, input_conn):
             break
         if bts is None:
             break
-        ha = AudioSegment.from_file(io.BytesIO(bts), format=audio_format)
-        ha = ha.set_channels(1)
-        ha = ha.set_frame_rate(22050)
-        ha = ha.set_sample_width(2)
+        segment = MyAudioSegment.from_bytes(bts, audio_format)
+        converted = np.trim_zeros(segment.get_array_of_samples(), 'f')[300:]
+        samples = np.append(samples, converted)
 
-        converted = np.trim_zeros(ha.get_array_of_samples()[100:], 'f')
-        sampls = np.append(sampls, converted)
-
-        if sampls.size >= 2*FRQ:
-            scipy.io.wavfile.write('ahh.wav', FRQ, sampls[:2*FRQ])
-            input_conn.send(get_input_vector(sampls[:2*FRQ]))
-            sampls = sampls[2*FRQ:]
+        if samples.size >= 2*FRQ:
+            # scipy.io.wavfile.write('ahh.wav', FRQ, sampls[:2*FRQ])
+            input_conn.send(get_input_vector(samples[:2*FRQ], FRAME_WIDTH, NUM_FRAMES))
+            samples = samples[2*FRQ:]
 
 
-def read_transmission(input_conn, radio_recv_ev, radio_link):
+def radio_proc(input_conn, recv_enable_ev, radio_link):
     radio_url = decode_to_url(radio_link)
-    url_conn = urllib.request.urlopen(radio_url)
+    try:
+        url_conn = urllib.request.urlopen(radio_url)
+    except BadStatusLine:
+        return
+    except URLError:
+        return
+
     audio_format = get_format(url_conn)
+    if not audio_format:
+        return
+
+    bsize = get_bsize(url_conn)
+
     bytes_q = Queue()
 
-    audio_segmrnt_thread = Thread(target=audio_segment_process,
-                                  args=(audio_format, bytes_q, input_conn ))
-    audio_segmrnt_thread.start()
-    # data_recv_conn, data_send_conn = Pipe(duplex=False)
-    # audio_segment_proc = Process(target=audio_segment_process,
-    #                              args=(audio_format, bytes_q, input_conn ))
-    # audio_segment_proc.start()
-    while (not url_conn.closed and radio_recv_ev.is_set()):
-        bytes_q.put(url_conn.read(10240))
+    audio_segment_thread = Thread(target=audio_segment_proc,
+                                  args=(audio_format, bytes_q, input_conn))
+    audio_segment_thread.start()
+
+    while (not url_conn.closed and recv_enable_ev.is_set()):
+        bytes_q.put(url_conn.read(bsize))
 
     bytes_q.put(None)
     print('halo?')
 
 
-def get_input_vector(song):
-    zcr_v, ste_v = zcr_ste(song, FRAME_WIDTH, NUM_FRAMES)
-    zcr_mean = zcr_v.mean()
-    input_vector = [
-        zcr_diff_mean(zcr_v, zcr_mean),
-        zcr_third_central_moment(zcr_v),
-        zcr_exceed_th(zcr_v, zcr_mean),
-        zcr_std_of_fod(zcr_v),
-        ste_mler(ste_v),
-    ]
-    return np.array([input_vector])
-
-
-def aud_seg_to_array(segment):
-    samples = segment.get_array_of_samples()
-    # samples = del_silence(samples)
-    return np.array(samples)
-
-
 def classifier(input_conn, output_send_conn, start_event):
-    from tensorflow.python import keras
-    import time
-    import csv
-    model = keras.models.load_model('hit.hdf5')
-    f = open(r'kasz.csv', 'a')
+
+    clf = Classifier('siup.hdf5')
     start_event.set()
+
     while True:
         pass
         try:
             x_v = input_conn.recv()
-        except EOFError as e:
-            print(e)
+        except EOFError:
             break
 
-        if type(x_v) is str and x_v == KILL_MSG:
-            break
-        else:
-            print(x_v)
-            prediction = model.predict(x_v)
-            print(prediction)
-
-            writer = csv.writer(f)
-            writer.writerow([time.time(), prediction])
-
-            output_send_conn.send(prediction)
+        prediction = clf.predict(x_v)
+        output_send_conn.send(prediction)
 
 
 def main():
+    import time
     sg.change_look_and_feel('DarkBlue1')
 
     layout = [
@@ -170,7 +158,6 @@ def main():
         [
             sg.Button(button_text='Start', key='switch'),
             sg.CloseButton(button_text='Zamknij'),
-
         ]
     ]
 
@@ -180,55 +167,77 @@ def main():
     prediction_cls = window['prediction_cls']
     start_stop_btn = window['switch']
 
-    # flow czytania transmisji
+
     input_recv_conn, input_send_conn = Pipe(duplex=False)
     output_recv_conn, output_send_conn = Pipe(duplex=False)
     keras_start_ev = Event()
     keras_start_ev.clear()
-    radio_recv_ev = Event()
-    radio_recv_ev.clear()
+    recv_enable_ev = Event()
+    recv_enable_ev.clear()
 
-    classify_process = Process(target=classifier,
+    classifier_process = Process(target=classifier,
                                args=(input_recv_conn, output_send_conn, keras_start_ev, ))
-    read_process = Process()
+    radio_process = Process()
 
-    classify_process.start()
+    classifier_process.start()
     keras_start_ev.wait()
+
+    tt =[]
+    a = 0
+
+    def _proc_stop():
+        recv_enable_ev.clear()
+        radio_process.join()
+        start_stop_btn.Update('Start')
+
+    def _proc_start():
+        recv_enable_ev.set()
+        radio_process.start()
+        start_stop_btn.Update('Stop')
+
+    def _show_class(prediction):
+        prediction_bar.UpdateBar(prediction)
+        prediction_prc.Update(f'{prediction:1.2f}')
+        if prediction > 0.5:
+            prediction_cls.Update('MUZYKA')
+        else:
+            prediction_cls.Update('TREŚCI INFORMACYJNE')
 
     while True:
         if output_recv_conn.poll():
+            if a!= 0:
+                tt.append(time.time()-a)
+            print(time.time()-a, "SREDNIA", np.mean(tt))
+            a = time.time()
             prediction = output_recv_conn.recv()[0][0]
-            prediction_bar.UpdateBar(prediction)
-            prediction_prc.Update(f'{prediction:1.2f}')
-            if prediction > 0.5:
-                prediction_cls.Update('MUZYKA')
-            else:
-                prediction_cls.Update('TREŚCI INFORMACYJNE')
+            _show_class(prediction)
+
 
         event, values = window.read(1000)
-        if event == 'switch':
-            if not read_process.is_alive():
-                read_process = Process(target=read_transmission, args=(input_send_conn, radio_recv_ev, values['link']))
-                radio_recv_ev.set()
-                read_process.start()
-                start_stop_btn.Update('Stop')
-            else:
-                radio_recv_ev.clear()
-                read_process.join()
-                start_stop_btn.Update('Start')
+        if recv_enable_ev.is_set() and not radio_process.is_alive():
+            _proc_stop()
 
-        if (not event and not values) or event == 'close' :
+        if event == 'switch':
+            if not radio_process.is_alive():
+                radio_process = Process(target=radio_proc, args=(input_send_conn, recv_enable_ev, values['link']))
+                _proc_start()
+            else:
+                _proc_stop()
+
+        if (not event and not values) or event == 'close':
             break
 
-    radio_recv_ev.clear()
+    # recv_enable_ev.clear()
+
+
+    # if radio_process.is_alive():
+    #     radio_process.join()
+    #     radio_process.close()
+    #
+    classifier_process.join()
+    print('halooo')
+    classifier_process.close()
     input_send_conn.close()
-
-    if read_process.is_alive():
-        read_process.join()
-        read_process.close()
-
-    classify_process.join()
-    classify_process.close()
 
 
 if __name__ == '__main__':

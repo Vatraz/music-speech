@@ -1,5 +1,5 @@
 DATASET_PATH = './../dataset/'
-OUT_PATH = './out2/'
+OUT_PATH = './out1/'
 # FREQUENCY = 16000
 FREQUENCY = 22050
 # FRAME_WIDTH = 256

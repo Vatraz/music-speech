@@ -36,7 +36,7 @@ def main(l, sc = False):
 
     print(X_train)
 
-    filepath = 'hit.hdf5'
+    filepath = 'siup.hdf5'
     try:
         model = load_model(filepath)
     except:
@@ -98,10 +98,10 @@ def test_all(model, t, sc=None):
 
 if __name__ == '__main__':
 
-    # main('hm', sc=False)
+    # main('zero', sc=False)
 
     # model = load_model('pukiconajlepszy550.hdf5')
     # model = load_model('hit.hdf5')
-    model = load_model('hit.hdf5')
+    model = load_model('siup.hdf5')
     for tup in ('hm', 'anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic','wav', 'g', 't', 'c'):
         test_all(model, tup)

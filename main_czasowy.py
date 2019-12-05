@@ -112,7 +112,7 @@ def main(model):
 
         yy = [(1+x*(-1)) for x in y]
         x = list(range(len(y)))
-        plt.plot(x, y,  color='b', alpha=0.9, linewidth=2)
+        plt.plot(x, y,  color='g', alpha=0.9, linewidth=2)
         podzialka = 20
         plt.xticks(np.arange(0, ile+1, ile/podzialka), np.arange(0, czas+1, int(czas/podzialka)))
         # plt.fill_between(x, 0, yy, color='r', alpha=0.7, linewidth=0.0, hatch = '---')
@@ -127,7 +127,7 @@ def main(model):
             yy3 = [x[0] for x in yy3]
             yy2 =  make_list(yy2, ileX)
             yy3 =  make_list(yy3, ileX)
-            plt.fill_between(x, 0, yy2, color='g', alpha=0.9, linewidth=0.1)
+            plt.fill_between(x, 0, yy2, color='b', alpha=0.9, linewidth=0.1)
             # plt.plot(yy3, 'orange', alpha=0.9)
             # plt.plot([0.5]*ile, 'r', alpha=0.9)
 

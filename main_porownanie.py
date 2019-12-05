@@ -33,57 +33,59 @@ def draw_feature_table(feature_list):
 
 if __name__ == '__main__':
     #  speech_files, music_files = (DATASET_PATH + 'music_16k/redhot.wav',
-    speech_files, music_files = (DATASET_PATH + 'music_wav_22k/jazz.wav',
-                                 #  DATASET_PATH + 'speech_16k/shannon.wav')
-                                 'jezu - Copy (2).wav')
+    music_files, speech_files = (DATASET_PATH + 'music_wav_22k/blues.wav',
+                                  DATASET_PATH + 'speech_wav_22k/shannon.wav')
+                                 # 'jezu - Copy (2).wav'
+
 
     music_data = read_audio_file(music_files, FRAME_WIDTH, ZCR_THRESHOLD)
     speech_data = read_audio_file(speech_files, FRAME_WIDTH, ZCR_THRESHOLD)
 
     #  plt.plot(range(len(music_data['wavedata'])), music_data['wavedata'], range(len(music_data['wavedata'])), speech_data['wavedata'])
-    #  draw_feature_table(['filepath', 'ste_mean', 'ste_diff_mean','ste_exceed_th',
-    #                      'ste_third_central_moment', 'ste_std_of_fod', 'ste_mean'])
-    #  draw_plots(features=['ste', 'ste'])
+    #  draw_feature_table(['filepath', 'zcr_mean', 'zcr_diff_mean','zcr_exceed_th',
+    #                      'zcr_third_central_moment', 'zcr_std_of_fod', 'zcr_mean'])
+    #  draw_plots(features=['zcr', 'zcr'])
 
-    #  # tylko dla dlugich STE
+    #  # tylko dla dlugich zcr
     #  music_data['timestamps'] = music_data['timestamps'][int(len(music_data['timestamps'])//1.2):]
-    #  music_data['ste'] = music_data['ste'][int(len(music_data['timestamps'])//1.2):]
+    #  music_data['zcr'] = music_data['zcr'][int(len(music_data['timestamps'])//1.2):]
     
 
-    lng = len(music_data['ste']) if len(music_data['ste']) <= len(speech_data['ste']) else len(speech_data['ste'])
-    # lng = lng // 3
+    lng = len(music_data['zcr']) if len(music_data['zcr']) <= len(speech_data['zcr']) else len(speech_data['zcr'])
+    lng = lng // 3
     x = list(range(lng))
-    max = max(music_data['ste'])
-    music_data['ste'] = [14 * d / max for d in  music_data['ste']]
-    speech_data['ste'] = [14 * d / max for d in  speech_data['ste']]
+    maxm = max(music_data['zcr'])
+    maxs = max(speech_data['zcr'])
+    music_data['zcr'] = [d / maxm for d in  music_data['zcr']]
+    speech_data['zcr'] = [d / maxs for d in  speech_data['zcr']]
     plt.subplot(2,1,1)
-    plt.title('a) ste dla mowy')
-    plt.plot(x, music_data['ste'][:lng], c='r')
-    # plt.ylim(0,12)
-    plt.ylabel('ste')
+    plt.title('a) ZCR dla mowy')
+    plt.plot(x, speech_data['zcr'][:lng], c='r', alpha=0.7)
+    plt.ylim(0,1)
+    plt.ylabel('ZCR')
     plt.xlabel('Numer ramki')
 
     plt.subplot(2,1,2)
-    plt.title('b) ste dla utworu muzycznego')
-    plt.plot(x, speech_data['ste'][:lng], c='b')
-    plt.ylim(0,12)
-    plt.ylabel('ste')
+    plt.title('b) ZCR dla utworu muzycznego')
+    plt.plot(x, music_data['zcr'][:lng], c='b', alpha=0.7)
+    plt.ylim(0,1)
+    plt.ylabel('ZCR')
     plt.xlabel('Numer ramki')
 
     plt.show()
 
 
-
-    plt.subplot(1,2,1)
-    plt.title('a) mowa')
-    plt.hist(music_data['ste'][:lng], bins=20, alpha=0.7, color='r', edgecolor='r')
-    plt.ylabel('liczność')
-    plt.xlabel('wartość ste')
-
-    plt.subplot(1,2,2)
-    plt.title('b) utwór muzyczny')
-    plt.hist(speech_data['ste'][:lng], bins=20, alpha=0.7, color='b', edgecolor='b')
-    plt.ylabel('liczność')
-    plt.xlabel('wartość ste')
-
-    plt.show()
+    #
+    # plt.subplot(1,2,1)
+    # plt.title('a) mowa')
+    # plt.hist(speech_data['zcr'][:lng], bins=20, alpha=0.7, color='r', edgecolor='r')
+    # plt.ylabel('liczność')
+    # plt.xlabel('wartość zcr')
+    #
+    # plt.subplot(1,2,2)
+    # plt.title('b) utwór muzyczny')
+    # plt.hist(music_data['zcr'][:lng], bins=20, alpha=0.7, color='b', edgecolor='b')
+    # plt.ylabel('liczność')
+    # plt.xlabel('wartość zcr')
+    #
+    # plt.show()
