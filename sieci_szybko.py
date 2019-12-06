@@ -1,7 +1,7 @@
-from tensorflow.python.keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint
 from numpy import loadtxt
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense
+# from tensorflow.python.keras.models import Sequential
+# from tensorflow.python.keras.layers import Dense
 from globals import OUT_PATH, DS_NAME
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
@@ -9,9 +9,9 @@ import seaborn as sns
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Dropout
-from tensorflow.python.keras.models import load_model
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
+from keras.models import load_model
 
 
 def main(l, sc = False):
@@ -128,9 +128,9 @@ def test_all(model, t, sc=None):
     test(model, t+'s', sc)
 
 if __name__ == '__main__':
-    test_sieci()
-    # main('zero', sc=False)
+    # test_sieci()
+    # main('hm', sc=False)
     # #
-    # model = load_model('siup.hdf5')
-    # for tup in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic'):
-    #     test_all(model, tup)
+    model = load_model('siup.hdf5')
+    for tup in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic'):
+        test_all(model, tup)

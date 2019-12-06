@@ -1,9 +1,6 @@
 import numpy as np
-from pydub import AudioSegment
 from scipy.stats import moment
-from scipy.io import wavfile
-from statistics import stdev
-from math import copysign
+
 
 def sgn(x):
     if x > 0:
@@ -11,12 +8,14 @@ def sgn(x):
     else:
         return -1
 
-def timestamps(wavedata, frame_width, sample_rate):
-    num_frames = int(np.ceil(len(wavedata) / frame_width))
-    return (np.arange(0, num_frames - 1) * (frame_width / float(sample_rate)))
 
+def zcr_ste(samples: np.ndarray, frame_width: int, num_frames: int) -> (np.ndarray, np.ndarray):
+    """ Funkcja zwracajaca wektory wartosci ZCR i STE
 
-def zcr_ste(samples: np.ndarray, frame_width: int, num_frames: int):
+    :param samples: wektor wartosci ZCR w oknie
+    :param frame_width: szerokosc ramki
+    :param num_frames: ilosc ramek w oknie
+    """
     chunks = np.array_split(samples, num_frames)
 
     f_zcr = lambda x: 1 / (2 * frame_width) * np.count_nonzero(np.diff(np.sign(x)))
@@ -27,134 +26,70 @@ def zcr_ste(samples: np.ndarray, frame_width: int, num_frames: int):
     return zcr_v, ste_v
 
 
+def zcr_diff_mean(zcr_v: np.ndarray, zcr_mean: float) -> float:
+    """ Roznica pomiedzy liczba ramek z ZCR powyzej i ponizej sredniej
 
-def zero_crossing_rate(wavedata, frame_width):
-    num_frames = int(np.ceil(len(wavedata) / frame_width))
-    zcr = []
-
-    for i in range(0, num_frames - 1):
-        start = i * frame_width
-        stop = np.min([(start + frame_width - 1), len(wavedata)])
-
-        zc = 1/(2*(frame_width-1)) *  np.count_nonzero(np.diff(np.sign(wavedata[start:stop])))
-
-        zcr.append(zc)
-
-    return np.asarray(zcr)
-
-
-def short_time_energy(wavedata, frame_width):
-    num_frames = int(np.ceil(len(wavedata) / frame_width))
-
-    ste = []
-
-    for i in range(num_frames - 1):
-        start = i * frame_width
-        stop = np.min([(start + frame_width - 1), len(wavedata)])
-        energy = np.sum(np.square(wavedata[start:stop]))
-        ste.append(energy)
-        if energy < 0:
-            print("OHO")
-    return np.asarray(ste)
-
-def zcr_mean_value(zcr):
-    return np.mean(zcr)
-
-
-# def zcr_diff_mean1(zcr, zcr_mean):
-#     return ((zcr > zcr_mean).sum() - (zcr < zcr_mean).sum())/(len(zcr))
-
-
-def zcr_diff_mean(zcr_v, zcr_mean):
+    :param zcr_v: wektor wartosci ZCR w oknie
+    :param zcr_mean: srednia ZCR w oknie
+    """
     return np.sum([sgn(zcr - zcr_mean) + 1 for zcr in zcr_v]) / (2*zcr_v.size)
 
-# def zcr_exceed_th(zcr, threshold):
-#     return (zcr > threshold).sum() / (len(zcr))
 
+def zcr_exceed_th(zcr_v: np.ndarray, zcr_mean: float, num_frames: int, control_coeff: float = 1.5) -> float:
+    """ Liczba wystapien wartosci ZCR powyzej progu
 
-def zcr_exceed_th(zcr_v, zcr_mean, control_coeff=1.5):
+    :param zcr_v: wektor wartosci ZCR w oknie
+    :param zcr_mean: srednia ZCR w oknie
+    :param num_frames: ilosc ramek w oknie
+    :param control_coeff: wspolczynnik kontrolny parametru
+    """
     m = max(zcr_v)
-    n = len(zcr_v)
+    n = num_frames
     return np.sum([sgn(zcr - (m - control_coeff*zcr_mean)) + 1 for zcr in zcr_v]) / (2*n)
 
 
+def zcr_third_central_moment(zcr_v: np.ndarray) -> float:
+    """ Trzeci moment centralny dla wartosci ZCR
 
-def zcr_third_central_moment(zcr_v):
+    :param zcr_v: wektor wartosci ZCR w oknie
+    """
     return moment(zcr_v, moment=3)*100
 
 
-def zcr_std_of_fod(zcr_v):
-    """ Standard deviation of the first order difference """
+def zcr_std_of_fod(zcr_v: np.ndarray) -> float:
+    """  Odchylenie standardowe pierwszej roznicy wstecznej dla kolejnych wartosci ZCR
+
+    :param zcr_v: wektor wartosci ZCR w oknie
+    """
     return np.std(np.diff(zcr_v))
 
 
-def ste_mean(ste):
-    return np.mean(ste)
+def ste_mler(ste_v: np.ndarray, num_frames: int, control_coeff: float = 0.15) -> float:
+    """ MLER
 
-def ste_mler(ste_v, control_coeff=0.2):
+    :param ste_v: wektor wartosci STE w oknie
+    :param num_frames: ilosc ramek w oknie
+    :param control_coeff: wspolczynnik kontrolny parametru
+    """
     ste_mean = np.mean(ste_v)
-    n = len(ste_v)
-
+    n = num_frames
     return np.sum([sgn(control_coeff*ste_mean - ste) + 1 for ste in ste_v]) / (2*n)
 
 
-def read_audio_file(filepath, frame_width, zcr_threshold):
-    samplerate, wavedata = wavfile.read(filepath)
+def get_input_vector(samples: np.ndarray, frame_width: int, num_frames: int) -> np.ndarray:
+    """ Wektor wejsciowy parametrow klasyfikatora
 
-    data = {
-        'filepath': filepath,
-        "samplerate": samplerate,
-        "wavedata": wavedata,
-        "number_of_samples": wavedata.shape[0],
-        "audio_legth": int(wavedata.shape[0] / samplerate),
-        'timestamps': timestamps(wavedata, frame_width, samplerate),
-        'zcr': zero_crossing_rate(wavedata, frame_width),
-        'ste': short_time_energy(wavedata, frame_width)
-    }
-
-    data['zcr_mean'] = zcr_mean_value(data['zcr'])
-    data['zcr_diff_mean'] = zcr_diff_mean(data['zcr'], data['zcr_mean'])
-    data['zcr_exceed_th'] = zcr_exceed_th(data['zcr'], zcr_threshold)
-    data['zcr_third_central_moment'] = zcr_third_central_moment(data['zcr'])
-    data['zcr_std_of_fod'] = zcr_std_of_fod(data['zcr'])
-
-    data['ste_mean'] = ste_mean(data['ste'])
-    data['ste_mler'] = ste_mler(data['ste'])
-
-    return data
-
-
-def get_audio_features(filepath, frame_width, sound_type):
-    # samplerate, wavedata = wavfile.read(filepath)
-    # wavedata = wavedata[:22050]
-    ha = AudioSegment.from_file(filepath, format='wav')
-    ha = ha.set_channels(1)
-    ha = ha.set_frame_rate(22050)
-    ha = ha.set_sample_width(2)
-    wavedata = np.array(ha.get_array_of_samples(), dtype=np.int16)
-    zcr, ste = zcr_ste(wavedata, frame_width, 100)
-    # ste = short_time_energy(wavedata, frame_width)
-    zcr_mean = zcr_mean_value(zcr)
-    data = {
-        'type': sound_type,
-        'zcr_diff_mean': zcr_diff_mean(zcr, zcr_mean),
-        'zcr_third_central_moment': zcr_third_central_moment(zcr),
-        'zcr_exceed_th': zcr_exceed_th(zcr, zcr_mean),
-        'zcr_std_of_fod': zcr_std_of_fod(zcr),
-        'ste_mler': ste_mler(ste),
-        # 'zcr_mean': zcr_mean,
-    }
-    return data
-
-
-def get_input_vector(song, frame_width, num_frames):
-    zcr_v, ste_v = zcr_ste(song, frame_width, num_frames)
+    :param samples: probki sygnalu
+    :param frame_width: szerokosc ramki
+    :param num_frames: ilosc ramek w oknie
+    """
+    zcr_v, ste_v = zcr_ste(samples, frame_width, num_frames)
     zcr_mean = zcr_v.mean()
     input_vector = [
         zcr_diff_mean(zcr_v, zcr_mean),
         zcr_third_central_moment(zcr_v),
-        zcr_exceed_th(zcr_v, zcr_mean),
+        zcr_exceed_th(zcr_v, zcr_mean, num_frames),
         zcr_std_of_fod(zcr_v),
-        ste_mler(ste_v),
+        ste_mler(ste_v, num_frames),
     ]
     return np.array([input_vector])

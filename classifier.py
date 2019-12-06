@@ -1,41 +1,34 @@
-from tensorflow.python.keras.callbacks import ModelCheckpoint
-from numpy import loadtxt
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense
-from globals import OUT_PATH, DS_NAME
-import matplotlib.pyplot as plt
-from sklearn import preprocessing
-import seaborn as sns
+import sys
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Dropout
-from tensorflow.python.keras.models import load_model
+from keras.callbacks import ModelCheckpoint
+from keras.models import Sequential, load_model
+from keras.layers import Dense
 
+MODEL_PATH = 'siup.hdf5'
 
 class Classifier():
-    def __init__(self, model_path):
+    def __init__(self, model_path=MODEL_PATH):
         self.model = load_model(model_path)
 
     def predict(self, X):
         return self.model.predict(X)
 
 
-
-def train(l=None, sc = False):
-    dataset = pd.read_csv(OUT_PATH + 'hm' + '.csv', header=0)
+def train(csv_path):
+    try:
+        dataset = pd.read_csv(csv_path, header=0)
+    except FileNotFoundError:
+        print('Nie znaleziono pliku csv')
+        return
 
     X = dataset.iloc[:,1:]
     y = dataset.iloc[:,0]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=997)
 
-    print(X_train)
-
-    filepath = 'siup.hdf5'
     try:
-        model = load_model(filepath)
+        model = load_model(MODEL_PATH)
     except:
         model = Sequential()
 
@@ -47,25 +40,15 @@ def train(l=None, sc = False):
                       optimizer='adam',
                       metrics=['accuracy'])
 
+    checkpointer = ModelCheckpoint(MODEL_PATH, verbose=1, save_best_only=True, monitor='acc', save_weights_only=False)
+    model.fit(X_train, y_train, epochs=500, batch_size=200, callbacks=[checkpointer])
 
-    checkpointer = ModelCheckpoint(filepath, verbose=1, save_best_only=True, monitor='acc', save_weights_only=False)
-    history = model.fit(X_train, y_train, epochs=500, batch_size=200, callbacks=[checkpointer])
-
-    plt.plot(history.history['acc'])
-    plt.title('Model accuracy')
-    plt.ylabel('Accuracy')
-    plt.xlabel('Epoch')
-    plt.legend(['Train', 'Test'], loc='upper left')
-    plt.show()
-
-    #  ===========================================
     score = model.evaluate(X_test, y_test,verbose=1)
     print(score)
 
+
 if __name__ == '__main__':
-    train()
-    # main('zero', sc=False)
-    # #
-    # model = load_model('siup.hdf5')
-    # for tup in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic'):
-    #     test_all(model, tup)
+    if len(sys.argv) == 2 and sys.argv[1].endswith('csv'):
+        train(sys.argv[1])
+    else:
+        print('Podaj ścieżkę do pliku csv')

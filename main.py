@@ -18,6 +18,7 @@ FRAME_WIDTH = 441
 NUM_FRAMES = 100
 FRQ = 22050
 
+
 class MyAudioSegment(AudioSegment):
     @classmethod
     def from_bytes(cls, b, f):
@@ -27,7 +28,6 @@ class MyAudioSegment(AudioSegment):
 
     def get_array_of_samples(self, *args, **kwargs):
         return np.array(super().get_array_of_samples(*args, **kwargs))
-
 
 
 def decode_to_url(link):
@@ -63,11 +63,11 @@ def get_format(url_conn):
     elif(content_type == 'application/ogg' or content_type == 'audio/ogg'):
         return 'ogg'
     else:
-        print('Nieznany format audio "' + content_type + '". Sprawdź adres.')
+        print('Nieobsługiwany format audio: "' + content_type + '".')
         return None
 
-def get_bsize(url_conn):
 
+def get_bsize(url_conn):
     bitrate = url_conn.getheader('icy-br')
     if bitrate:
         bitrate = bitrate.split(',')[0]
@@ -87,11 +87,10 @@ def audio_segment_proc(audio_format, bytes_q, input_conn):
         if bts is None:
             break
         segment = MyAudioSegment.from_bytes(bts, audio_format)
-        converted = np.trim_zeros(segment.get_array_of_samples(), 'f')[300:]
+        converted = np.trim_zeros(segment.get_array_of_samples(), 'f')
         samples = np.append(samples, converted)
 
         if samples.size >= 2*FRQ:
-            # scipy.io.wavfile.write('ahh.wav', FRQ, sampls[:2*FRQ])
             input_conn.send(get_input_vector(samples[:2*FRQ], FRAME_WIDTH, NUM_FRAMES))
             samples = samples[2*FRQ:]
 
@@ -121,29 +120,25 @@ def radio_proc(input_conn, recv_enable_ev, radio_link):
         bytes_q.put(url_conn.read(bsize))
 
     bytes_q.put(None)
-    print('halo?')
 
 
 def classifier(input_conn, output_send_conn, start_event):
 
-    clf = Classifier('siup.hdf5')
+    clf = Classifier()
     start_event.set()
 
     while True:
-        pass
-        try:
+        if input_conn.poll():
             x_v = input_conn.recv()
-        except EOFError:
-            break
 
-        prediction = clf.predict(x_v)
-        output_send_conn.send(prediction)
+            prediction = clf.predict(x_v)
+            output_send_conn.send(prediction)
+        if not start_event.is_set():
+            break
 
 
 def main():
-    import time
     sg.change_look_and_feel('DarkBlue1')
-
     layout = [
         [
             sg.Text('Stacja', size=(6, 1)), sg.Input(size=(36, 1), key='link'),
@@ -160,19 +155,17 @@ def main():
             sg.CloseButton(button_text='Zamknij'),
         ]
     ]
-
     window = sg.Window('Klasyfikator', layout)
     prediction_bar = window['prediction_bar']
     prediction_prc = window['prediction_prc']
     prediction_cls = window['prediction_cls']
     start_stop_btn = window['switch']
 
-
     input_recv_conn, input_send_conn = Pipe(duplex=False)
     output_recv_conn, output_send_conn = Pipe(duplex=False)
     keras_start_ev = Event()
-    keras_start_ev.clear()
     recv_enable_ev = Event()
+    keras_start_ev.clear()
     recv_enable_ev.clear()
 
     classifier_process = Process(target=classifier,
@@ -181,9 +174,6 @@ def main():
 
     classifier_process.start()
     keras_start_ev.wait()
-
-    tt =[]
-    a = 0
 
     def _proc_stop():
         recv_enable_ev.clear()
@@ -205,13 +195,8 @@ def main():
 
     while True:
         if output_recv_conn.poll():
-            if a!= 0:
-                tt.append(time.time()-a)
-            print(time.time()-a, "SREDNIA", np.mean(tt))
-            a = time.time()
             prediction = output_recv_conn.recv()[0][0]
             _show_class(prediction)
-
 
         event, values = window.read(1000)
         if recv_enable_ev.is_set() and not radio_process.is_alive():
@@ -227,17 +212,12 @@ def main():
         if (not event and not values) or event == 'close':
             break
 
-    # recv_enable_ev.clear()
+    if radio_process.is_alive():
+        _proc_stop()
 
-
-    # if radio_process.is_alive():
-    #     radio_process.join()
-    #     radio_process.close()
-    #
+    keras_start_ev.clear()
     classifier_process.join()
-    print('halooo')
     classifier_process.close()
-    input_send_conn.close()
 
 
 if __name__ == '__main__':

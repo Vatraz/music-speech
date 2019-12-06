@@ -1,12 +1,11 @@
 import glob
 import pandas as pd
-from functions import get_audio_features
 from globals import DATASET_PATH, OUT_PATH
 from globals import FRAME_WIDTH, ZCR_THRESHOLD, DS_NAME
 
 dfs = []
 # ZWYKLE
-for n in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic'):
+for n in ('anty', 'jeden', 'dwa', 'trzy', 'olsztyn', 'zet', 'fm', 'classic', 'wav', 'c', 'g', 't', 'f'):
     df = pd.read_csv(OUT_PATH + n + '.csv', header=0)
     dfs.append(df)
 
