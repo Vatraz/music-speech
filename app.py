@@ -145,7 +145,7 @@ def run():
     sg.change_look_and_feel('DarkBlue1')
     layout = [
         [
-            sg.Text('Station', size=(6, 1)), sg.Input(size=(36, 1), key='link'),
+            sg.Text('Link', size=(6, 1)), sg.Input(size=(36, 1), key='link'),
             sg.FileBrowse(size=(8, 1), button_text='Open', file_types=(('M3U', '*.m3u'), ('PLS', '*.pls')))
         ],
         [
@@ -159,7 +159,7 @@ def run():
             sg.CloseButton(button_text='Exit'),
         ]
     ]
-    window = sg.Window('Hmm', layout)
+    window = sg.Window('Classifier', layout)
     prediction_bar = window['prediction_bar']
     prediction_prc = window['prediction_prc']
     prediction_cls = window['prediction_cls']
