@@ -2,7 +2,7 @@ import glob
 import numpy as np
 import pandas as pd
 
-from classifier.globals import FRAME_WIDTH, WINDOW_WIDTH,  NUM_FRAMES_WINDOW, OUT_PATH
+from classifier.config import FRAME_WIDTH, WINDOW_WIDTH,  NUM_FRAMES_WINDOW, OUT_PATH
 from classifier.functions import get_input_vector
 from classifier.audio_segment import MyAudioSegment
 

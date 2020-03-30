@@ -1,6 +1,6 @@
 import glob
 import librosa
-from classifier.globals import FREQUENCY
+from classifier.config import FREQUENCY
 import os
 
 DATASET_PATH_MUSIC = ''

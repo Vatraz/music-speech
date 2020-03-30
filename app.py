@@ -11,7 +11,7 @@ import urllib.request
 from classifier.classifier import Classifier
 from classifier.functions import get_input_vector
 from classifier.audio_segment import MyAudioSegment
-from classifier.globals import FRAME_WIDTH, NUM_FRAMES_WINDOW, FREQUENCY
+from classifier.config import FRAME_WIDTH, NUM_FRAMES_WINDOW, FREQUENCY
 
 
 def decode_to_url(link: str) -> str:

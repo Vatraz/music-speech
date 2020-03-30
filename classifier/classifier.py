@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import sys
 
-from classifier.globals import MODEL_PATH
+from classifier.config import MODEL_PATH
 
 
 
